@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>道の駅の名物づくり 〜たまご（採卵鶏）編〜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0f172a;overflow:hidden;font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN','BIZ UDPGothic','Noto Sans JP','Yu Gothic',Meiryo,sans-serif;color:#1f2937}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:4px solid #facc15;outline-offset:2px}
+#viewport{position:fixed;inset:0}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center;overflow:hidden;background:#cfeaff;user-select:none;-webkit-user-select:none}
+#bg,#chars,#fx,#ui,#hud,#dlg,#teacher{position:absolute}
+#bg{inset:0}
+#bg .layer{position:absolute;inset:0;transition:opacity .7s}
+#bg svg,.fig svg{display:block;width:100%;height:100%}
+#fx{inset:0;pointer-events:none;overflow:hidden}
+
+/* 人物 */
+#chars{inset:0;pointer-events:none}
+.slot{position:absolute;bottom:250px;width:380px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transition:opacity .45s,transform .45s}
+.slot.hidden{opacity:0;transform:translateY(24px)}
+.slot .fig{width:170px;height:240px;position:relative;animation:bob 3.4s ease-in-out infinite}
+.slot:nth-child(2) .fig{animation-delay:-1.1s}.slot:nth-child(3) .fig{animation-delay:-2.2s}
+.slot.dim .fig{filter:grayscale(.9) brightness(.8);opacity:.75}
+.nt{margin-top:-8px;color:#fff;font-weight:900;font-size:15px;padding:3px 14px;border-radius:10px;text-align:center;line-height:1.25;position:relative;z-index:2}
+.nt small{display:block;font-weight:700;font-size:12px;opacity:.95}
+.bubble{width:360px;min-height:56px;max-height:150px;margin-bottom:14px;background:#fff;border:4px solid var(--c);border-radius:20px;padding:9px 15px;font-size:18px;line-height:1.5;font-weight:700;position:relative;opacity:0;transform:translateY(10px) scale(.95);transition:opacity .4s,transform .4s;display:flex;align-items:center}
+.bubble.show{opacity:1;transform:none}
+.bubble:after{content:"";position:absolute;left:50%;bottom:-16px;margin-left:-12px;border:12px solid transparent;border-top:14px solid var(--c);border-bottom:0}
+.bubble:empty{display:none}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* HUD */
+#hud{left:14px;right:14px;top:10px;height:62px;display:none;align-items:center;gap:12px;z-index:5}
+.chip{background:#14532d;color:#fff;border-radius:999px;padding:9px 20px;font-size:18px;font-weight:700;white-space:nowrap;max-width:430px;overflow:hidden;text-overflow:ellipsis}
+.meters{margin-left:auto;display:flex;gap:12px;background:rgba(255,255,255,.94);border-radius:16px;padding:8px 14px;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.m{position:relative;width:170px}
+.m .lab{display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:3px}
+.m .lab b{font-size:16px}
+.m .bar{height:13px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+.m .bar i{display:block;height:100%;border-radius:999px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.delta{position:absolute;right:0;top:-8px;font-weight:900;font-size:22px;padding:0 8px;border-radius:8px;background:#fff;animation:floatup 2s ease-out forwards;z-index:9;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.delta.good{color:#15803d}.delta.bad{color:#b91c1c}
+@keyframes floatup{0%{opacity:0;transform:translateY(8px) scale(.8)}15%{opacity:1;transform:translateY(0) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translateY(-22px)}}
+
+/* 会話窓 */
+#dlg{left:24px;right:24px;bottom:12px;height:228px;background:rgba(15,23,42,.975);border:4px solid #fff;border-radius:22px;color:#fff;padding:14px 28px;display:none;z-index:6}
+.spk{display:inline-block;color:#fff;font-weight:900;font-size:19px;padding:2px 16px;border-radius:10px}
+.txt{font-size:24px;line-height:1.65;margin-top:8px;min-height:80px;font-weight:500}
+.nx{position:absolute;right:30px;bottom:14px;font-size:26px;color:#fde68a;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+.go,.big,.btn{background:#fdba74;color:#1f2937;border:0;border-radius:14px;font-weight:900;font-size:20px;padding:10px 28px;min-height:48px;box-shadow:0 4px 0 #c2410c}
+.go{position:absolute;right:26px;bottom:14px}
+.go:hover,.big:hover,.btn:hover{filter:brightness(1.07)}
+.btn.sub{background:#fff;box-shadow:0 4px 0 #94a3b8}
+.btn.green{background:#86efac;box-shadow:0 4px 0 #15803d}
+
+/* 選択 */
+.prompt{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.prompt b{font-size:20px}
+.trade{background:#fef3c7;color:#78350f;border-radius:999px;font-size:15px;font-weight:700;padding:3px 14px}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.card{text-align:left;background:#fff;color:#1f2937;border:4px solid var(--c);border-radius:14px;padding:8px 12px 8px;min-height:118px;font-size:15px;line-height:1.4;position:relative;transition:transform .15s,box-shadow .15s}
+.card:hover{transform:translateY(-3px)}
+.card.sel{background:var(--soft);box-shadow:0 0 0 5px #facc15;transform:translateY(-4px)}
+.card .tg{display:inline-block;background:var(--c);color:#fff;border-radius:7px;padding:0 9px;font-size:13px;font-weight:900;margin-bottom:3px}
+.card b{display:block;font-size:17px;line-height:1.35;margin-bottom:2px}
+.card small{font-size:14px;color:#374151}
+.decide{margin-left:auto}
+.decide:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.memo{position:absolute;left:28px;right:210px;bottom:14px;background:#fef9c3;color:#422006;border-radius:12px;padding:8px 14px;font-size:16px;line-height:1.5}
+.memo b{color:#b45309}
+.note{color:#fca5a5;font-size:18px;margin-top:2px}
+.note:before{content:"⚠ "}
+
+/* 画面 */
+#ui{inset:0;display:none;z-index:8}
+.screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.panel{background:rgba(255,255,255,.98);border-radius:26px;box-shadow:0 10px 40px rgba(0,0,0,.3);padding:26px 38px}
+.title-card{text-align:center;width:820px;padding:30px 20px 24px}
+.title-card .small{display:inline-block;background:#14532d;color:#fff;border-radius:999px;font-weight:700;padding:5px 20px;font-size:18px}
+.title-card h1{margin:12px 0 0;font-size:70px;line-height:1.1;font-weight:900;color:#9a3412;text-shadow:0 4px 0 #fff}
+.title-card .sub{font-size:30px;font-weight:900;color:#166534;margin:6px 0 16px}
+.title-card .cr{margin-top:14px;font-size:15px;color:#475569}
+.form{width:760px}
+.form h2{margin:0 0 12px;font-size:30px;color:#9a3412}
+.row{display:flex;align-items:center;gap:14px;margin:12px 0;font-size:20px}
+.row label{width:150px;font-weight:700}
+.row input,.row select,.row textarea{font-size:20px;padding:8px 12px;border:3px solid #94a3b8;border-radius:12px;background:#fff}
+.row textarea{width:100%;height:92px;resize:none}
+.err{color:#b91c1c;font-weight:700;min-height:26px;font-size:17px}
+.rules{width:1040px}
+.rules h2{margin:0 0 10px;font-size:32px;color:#14532d}
+.rl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px;font-size:19px;line-height:1.55}
+.rl .it{background:#f1f5f9;border-radius:14px;padding:8px 14px}
+.rl .it b{display:block;font-size:20px}
+.mdot{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:8px;vertical-align:-1px}
+.goal{background:#fef3c7;border-radius:14px;padding:10px 16px;font-size:21px;font-weight:700;color:#78350f;margin:12px 0}
+.fail{background:rgba(31,41,55,.82);color:#fff;text-align:center;flex-direction:column;gap:14px}
+.fail h2{margin:0;font-size:44px;font-weight:900;max-width:1000px;line-height:1.3}
+.fail p{margin:0;font-size:24px;line-height:1.7;max-width:900px}
+.stampbox{background:#fef3c7;color:#78350f;font-size:32px;font-weight:900;padding:14px 34px;border-radius:16px;border:5px solid #b91c1c;transform:rotate(-2deg);animation:slam .7s .5s both}
+@keyframes slam{0%{opacity:0;transform:scale(2.4) rotate(-8deg)}70%{opacity:1;transform:scale(.95) rotate(-2deg)}100%{opacity:1;transform:scale(1) rotate(-2deg)}}
+.end{width:1196px;height:660px;display:flex;flex-direction:column;gap:12px}
+.end-top{display:flex;gap:26px;align-items:center}
+.stamp{flex:none;width:170px;height:170px;border-radius:50%;border:8px solid;display:flex;align-items:center;justify-content:center;font-size:110px;font-weight:900;background:#fff;animation:slam .8s .3s both}
+.g-S{color:#b91c1c;border-color:#b91c1c}.g-A{color:#c2410c;border-color:#c2410c}.g-B{color:#1d4ed8;border-color:#1d4ed8}.g-C{color:#15803d;border-color:#15803d}.g-D{color:#475569;border-color:#475569}
+.end .kicker{font-size:18px;font-weight:700;color:#78350f}
+.end h2{margin:0;font-size:38px;font-weight:900;color:#9a3412;line-height:1.25}
+.end p{margin:6px 0 0;font-size:20px;line-height:1.65}
+.end-mid{display:grid;grid-template-columns:300px 1fr 340px;gap:16px;flex:1;min-height:0}
+.box{background:#f8fafc;border-radius:16px;padding:10px 14px}
+.box h3{margin:0 0 6px;font-size:18px;color:#334155}
+.voice{display:flex;gap:8px;align-items:flex-start;margin:7px 0;font-size:17px;line-height:1.45}
+.voice i{flex:none;font-style:normal;font-weight:900;font-size:13px;color:#fff;background:#64748b;border-radius:8px;padding:1px 8px;margin-top:2px}
+.emeter{margin:7px 0;font-size:17px;font-weight:700}
+.emeter .bar{height:16px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:2px}
+.emeter .bar i{display:block;height:100%;border-radius:999px}
+.radnote{font-size:15px;text-align:center;color:#475569}
+.summary{display:grid;grid-template-columns:1fr;gap:4px;font-size:16px}
+.summary .sr{display:flex;gap:8px;align-items:center}
+.tagsm{flex:none;font-size:12px;font-weight:900;color:#fff;border-radius:6px;padding:0 7px}
+.reflect{width:1180px;height:660px;display:grid;grid-template-columns:330px 1fr;gap:22px}
+.reflect h2{margin:0 0 8px;font-size:28px;color:#9a3412}
+.reflect .q{margin:6px 0;font-size:18px;font-weight:700}
+.reflect textarea,.reflect select{width:100%;font-size:19px;padding:6px 10px;border:3px solid #94a3b8;border-radius:12px;background:#fff}
+.reflect textarea{height:74px;resize:none}
+.likert{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.likert button{background:#fff;border:3px solid #94a3b8;border-radius:12px;font-size:17px;font-weight:700;padding:8px 4px;min-height:46px}
+.likert button.on{background:#fde68a;border-color:#b45309}
+.copybox{width:100%;height:130px;font-size:14px;border:2px solid #94a3b8;border-radius:10px;padding:6px}
+.confetti{position:absolute;top:-30px;width:14px;height:14px;border-radius:3px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(800px) rotate(720deg);opacity:.9}}
+#teacher{left:6px;top:78px;z-index:30;display:none;background:rgba(255,255,255,.92);border-radius:10px;padding:6px 8px;font-size:12px;gap:4px;flex-wrap:wrap;width:330px}
+#teacher button{font-size:12px;padding:3px 7px;border-radius:6px;border:1px solid #64748b;background:#fff}
+@media (prefers-reduced-motion:reduce){.slot .fig{animation:none}.nx{animation:none}}
+
+/* 資料カード */
+.matwrap{background:rgba(15,23,42,.55)}
+.matpanel{width:1200px;max-height:690px;padding:18px 26px}
+.matpanel h2{margin:0 0 10px;font-size:28px;color:#14532d}
+.mats{display:flex;gap:16px;align-items:stretch;margin-bottom:12px}
+.mat{flex:1;margin:0;background:#f1f5f9;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.mat.wide{flex:1.7}
+.mat.wide .pic{aspect-ratio:auto;height:400px}
+.mat .pic{aspect-ratio:520/330;max-height:400px;background:#eef2f6;display:flex;align-items:center;justify-content:center}
+.mat .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.mat .pic svg{width:100%;height:100%;display:block}
+.mat figcaption{padding:8px 12px 10px;font-size:17px;line-height:1.5;font-weight:500}
+.mat figcaption small{display:block;font-size:12px;color:#64748b;margin-top:2px}
+.matbtn{margin-left:auto;font-size:16px;padding:6px 16px;min-height:44px}
+.matbtn + .decide{margin-left:0}
+
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+<div id="bg"></div><div id="chars"></div><div id="hud"></div><div id="dlg"></div><div id="ui"></div><div id="fx"></div><div id="teacher"></div>
+</div></div>
+<script>
+/* ===== 題材データ：採卵鶏（動物の飼育） ===== */
+const TOPIC = {
+  key: 'tori', sub: 'たまご（採卵鶏）編', item: 'たまご', area: '動物の飼育',
+  sim: '採卵鶏（道の駅の名物づくり）',
+  failAfter: 'それから2か月…', failBg: 'failcoop',
+  photoCredits: {},
+  prologue: (n) => [
+    { spk: 'narr', text: 'ここは、海と山にはさまれた「道の駅　みのりの里」。裏山のふもとに、小さな養鶏場（ようけいじょう）がある。' },
+    { spk: 'narr', text: n + 'は今日から、この道の駅の新しい名物づくりを任されることになった。' },
+    { spk: 'boss', text: 'やあ、' + n + 'くん！新名物は、とれたての卵でいく。安く、たくさん、早く産ませて、どんどん売るぞ！', show: ['boss'], hl: ['boss'], mood: { boss: 'happy' } },
+    { spk: 'craft', text: 'わしは職人の匠。卵は味が命だ。手間をおしむと、すぐにお客さんにばれるぞ。', show: ['boss', 'craft'], hl: ['craft'], mood: { craft: 'normal' } },
+    { spk: 'sci', text: '研究者の緑川です。環境や鶏（にわとり）の健康をこわすと、長く続けられませんよ。', show: ['boss', 'craft', 'sci'], hl: ['sci'], mood: { sci: 'normal' } },
+    { spk: 'narr', text: '意見のちがう3人。まずは、社長の言うとおりに進めてみることにした…。', hl: ['boss', 'craft', 'sci'] }
+  ],
+  failTalk: (n) => [
+    { spk: 'craft', text: '安さばかり見て、鶏そのものを見ていなかったな。', mood: { boss: 'worried', craft: 'angry', sci: 'normal' }, hl: ['craft'] },
+    { spk: 'sci', text: '鶏の健康を無視すると、卵の数もついてこないんです。', hl: ['sci'] },
+    { spk: 'boss', text: 'ううむ…。' + n + 'くん、今度は3人の意見をよく聞いて、くらべて決めてくれ！', hl: ['boss'], mood: { boss: 'worried', craft: 'normal', sci: 'normal' } }
+  ]
+};
+
+const METERS = [
+  { k: 'y', label: '生産量',      color: '#B45309', help: 'どれだけたくさん卵がとれたか' },
+  { k: 'q', label: '品質',        color: '#1D4ED8', help: 'おいしさ・見た目・安全' },
+  { k: 'c', label: 'コスト',      color: '#6B7280', help: 'かかったお金と手間（小さいほどよい）' },
+  { k: 'e', label: '環境・生き物', color: '#15803D', help: '鶏の健康・におい・水や土への影響' }
+];
+
+/* ---------- ステージ1（社長だけの意見で進めて失敗） ---------- */
+const STAGE1 = [
+  { bg: { kind: 'coop', mode: 'cage' }, talk: '「ヒナはいちばん安いやつを、せまいケージにぎっしり入れるぞ！すき間なんて、なくていい！」',
+    result: '安いヒナが育ち、ケージにぎっしり入った。仕入れ代は大きく下がった！', d: { y: 8, q: 0, c: -8, e: -3 } },
+  { bg: { kind: 'coop', mode: 'cage', night: true }, talk: '「夜中も電気をつけっぱなしにしろ！休ませるな、どんどん産ませるんだ！」',
+    result: '一晩じゅう明かりをつけた。卵の数は増えた。…でも、殻（から）のうすい卵が目立ってきた。', d: { y: 4, q: -6, c: 4, e: -8 } },
+  { bg: { kind: 'coop', mode: 'floor', dirty: true }, talk: '「そうじも消毒も、金と時間のムダだ！ネットの穴も放っておけ！」',
+    result: 'ふんはたまり、ネットの穴からは野鳥が出入りしている。…鶏のようすが、少しおかしい？', d: { y: 3, q: -4, c: -4, e: -12 } }
+];
+const STAGE1_FAIL = {
+  title: '卵が、ほとんど出荷できない…',
+  text: 'ぎゅうぎゅうのケージで休めない鶏は、すっかり弱ってしまった。よごれた鶏舎に野鳥が入りこみ、病気が一気に広がった。卵はほとんど産まれず、出荷も止められてしまった。',
+  to: { y: 14, q: 10, c: 62, e: 6 }
+};
+
+/* ---------- ステージ2：10の場面 ---------- */
+const SCENES = [
+  {
+    id: 's1', title: 'ヒナえらび', bg: { kind: 'chicks' }, trade: '生産量がふえた ⇔ コスト・環境問題',
+    intro: 'まずはヒナえらび。ヒナを育てる農場に、3種類の鶏（にわとり）のヒナがならんでいる。',
+    talk: {
+      boss: '「いちばん安いヒナにしよう！仕入れが安ければ、たくさん飼って元がとれる！」',
+      craft: '「味で選ぶんだ。卵にコクがあると評判の種類がある。産む数は少ないが、そこは譲れん。」',
+      sci: '「じょうぶでおとなしい種類がいいと思います。病気や暑さに強いので、むりなく飼えますよ。」'
+    },
+    ch: {
+      boss:  { label: '値段のいちばん安いヒナ', desc: 'たくさん買えるが、体の弱いヒナもまじっている。', d: { y: 3, q: -3, c: -5, e: -4 },
+               result: '安いヒナをたくさん仕入れた。仕入れ代はぐっと抑えられた。' },
+      craft: { label: '味で評判の種類のヒナ', desc: '卵にコクがあると人気。産む数は少なめで、えさをよく食べる。', d: { y: -3, q: 6, c: 4, e: -1 },
+               result: '味で評判の種類を選んだ。どんな卵を産むか、楽しみだ。' },
+      sci:   { label: 'じょうぶで、おとなしい種類のヒナ', desc: '病気や暑さに強く、飼いやすい。値段は高め。', d: { y: 4, q: 2, c: 6, e: 4 },
+               result: 'じょうぶな種類のヒナを選んだ。値段は高いが、元気に歩き回っている。' }
+    },
+    memo: '鶏は、卵をたくさん産むように品種改良されてきた。代表的な白色レグホーンは、1年に約300個の卵を産む。卵の殻（から）の色は、鶏の種類で決まる。',
+    react: {
+      boss:  { pos: '仕入れが安く済んだのはいいぞ！', neg: '高いヒナだな…元がとれるのか？' },
+      craft: { pos: '味のよい卵は、それだけで強みだ。', neg: '味より数か…それでは名物にならん。' },
+      sci:   { pos: 'じょうぶな鶏なら、むりなく飼えますね。', neg: '体の弱いヒナだと、あとで苦労しますよ。' }
+    }
+  },
+  {
+    id: 's2', title: '飼い方', bg: { kind: 'coop', mode: 'cage' }, trade: '効率よくできる ⇔ 生き物の健康',
+    mat: { title: '資料：鶏の飼い方', items: [
+      { fig: 'kaikata', photo: 'kaikata', wide: true, cap: 'ケージ飼い：せまい場所でたくさん飼え、卵を集めやすい。平飼い：鶏舎の床を自由に歩ける。放し飼い：外の運動場にも出られる。' },
+      { fig: 'aw', cap: 'アニマルウェルフェア：家畜を、ストレスや苦しみの少ない、快適な環境で飼おうという考え方。' } ] },
+    intro: 'ヒナが育ってきた。鶏を、どんな鶏舎（けいしゃ）で飼うか決めよう。',
+    talk: {
+      boss: '「ケージを何段も積み重ねて飼おう！同じ広さで何倍も飼えるし、卵も集めやすい。」',
+      craft: '「外の運動場に放して飼うんだ。日を浴びて、土をつついて育った鶏は、いい卵を産む。」',
+      sci: '「鶏舎の中を自由に歩ける「平飼い（ひらがい）」にしましょう。止まり木や巣箱があると、鶏が落ち着きます。」'
+    },
+    ch: {
+      boss:  { label: 'ケージを積み重ねて飼う', desc: 'たくさん飼えて効率がよい。鶏は、ほとんど動けない。', d: { y: 5, q: -2, c: 2, e: -9 },
+               result: 'ケージを3段に積んで、鶏を入れた。同じ広さで、何倍もの鶏が飼える。' },
+      craft: { label: '外の運動場に放して飼う', desc: '鶏はよく運動する。広い土地と、卵を集める手間が必要。', d: { y: 2, q: 5, c: 7, e: 1 },
+               result: '運動場に鶏を放した。土をつついたり、砂をあびたりしている。' },
+      sci:   { label: '止まり木と巣箱のある平飼い', desc: '鶏が自由に歩ける。ケージより飼える数は少なく、設備代もかかる。', d: { y: 3, q: 3, c: 4, e: 8 },
+               result: '止まり木と巣箱のある鶏舎にした。夜になると、鶏たちは止まり木にならんで休む。' }
+    },
+    memo: '日本の採卵鶏の多くは、効率のよいケージで飼われている。いっぽうで、家畜を快適な環境で飼う「アニマルウェルフェア」の考え方が世界で広がり、平飼いや放し飼いも見直されている。',
+    react: {
+      boss:  { pos: 'たくさん飼えるのは強いぞ！', neg: '土地も設備も、金がかかりすぎだ。' },
+      craft: { pos: 'よく動く鶏は、いい卵を産むぞ。', neg: 'ぎゅうぎゅうづめでは、鶏がかわいそうだ。' },
+      sci:   { pos: '鶏が、鶏らしくすごせますね。', neg: '動けない鶏は、足や骨が弱くなります。' }
+    }
+  },
+  {
+    id: 's3', title: 'えさ', bg: { kind: 'coop', mode: 'floor', feed: true }, trade: 'コスト ⇔ 品質・環境',
+    mat: { title: '資料：えさと卵の関係', items: [
+      { fig: 'kimi', wide: true, cap: '黄身の色は、えさで決まる。トウモロコシが多いと黄色、米が多いと白っぽく、パプリカなどを加えるとオレンジ色になる。' },
+      { fig: 'kara', cap: '殻の色（白・うす茶色など）は、鶏の種類で決まる。殻の色で、栄養はほとんど変わらない。' } ] },
+    intro: '鶏は、1日に100gあまりのえさを食べる。どんなえさを与えるか決めよう。',
+    talk: {
+      boss: '「いちばん安い輸入のえさだけでいい！栄養の計算なんて、時間のムダだ。」',
+      craft: '「魚粉や海そう、パプリカをまぜた特製のえさを使うんだ。黄身の色とコクが、ぜんぜんちがってくる。」',
+      sci: '「地元の飼料用の米や、とうふ工場から出るおからを活用しましょう。栄養を計算して、足りない分だけ補います。」'
+    },
+    ch: {
+      boss:  { label: '安い輸入のえさだけを与える', desc: 'えさ代は安い。栄養がかたよりやすく、遠い外国から運ぶ燃料もかかる。', d: { y: 0, q: -4, c: -5, e: -5 },
+               result: '安い輸入のえさを、まとめて買った。えさ代はぐっと下がった。' },
+      craft: { label: '魚粉やパプリカ入りの特製のえさ', desc: '黄身の色とコクがよくなる。えさ代が高い。', d: { y: 4, q: 6, c: 7, e: 2 },
+               result: '特製のえさをまぜて与えた。黄身の色が、こいオレンジ色になってきた。' },
+      sci:   { label: '地元の米や、おからを活かしたえさ', desc: '地域の資源をむだなく使える。栄養を計算する手間が少しかかる。', d: { y: 3, q: 3, c: 3, e: 6 },
+               result: '飼料用の米とおからをまぜ、栄養を計算して与えた。地元の農家も喜んでいる。' }
+    },
+    memo: '日本は、家畜のえさの多くを輸入にたよっている。飼料用の米や、食品工場から出る残りをえさにする「エコフィード」の取り組みが進んでいる。卵の殻をつくるには、カルシウムも欠かせない。',
+    react: {
+      boss:  { pos: 'えさ代が安く済んだぞ！', neg: 'えさに、そんなに金をかけるのか？' },
+      craft: { pos: 'えさがよければ、卵は正直にこたえる。', neg: 'えさをけちると、卵にすぐ出るぞ。' },
+      sci:   { pos: '地域の中で、資源がまわりますね。', neg: '栄養がかたよると、殻の弱い卵になります。' }
+    }
+  },
+  {
+    id: 's4', title: '病気の予防', bg: { kind: 'coopout', net: true }, trade: '予防の手間とお金 ⇔ 生産量と品質',
+    mat: { title: '資料：病気を鶏舎に入れない', items: [
+      { fig: 'bouchou', photo: 'bouchou', wide: true, cap: '鳥インフルエンザなどの病気は、野鳥やねずみ、人のくつや車についたウイルスから広がる。ネットでふせぎ、出入口で消毒する。' } ] },
+    intro: '冬が近づき、わたり鳥が飛んでくる季節になった。鶏の病気への備えを決めよう。',
+    talk: {
+      boss: '「うちの鶏は元気だ、対策は金のムダ！ネットの穴も、そのままでいい。」',
+      craft: '「毎日、1羽ずつ顔色とふんを見る。くつも道具も、鶏舎ごとに分けて消毒だ。病気は入口で止める。」',
+      sci: '「防鳥ネットで、野鳥を入れないようにしましょう。出入口に消毒そうを置いて、出入りの記録もつけます。」'
+    },
+    ch: {
+      boss:  { label: '何もしない（ネットの穴もそのまま）', desc: 'お金も手間もかからない。病気が入るかどうかは運まかせ。', d: { y: -6, q: -5, c: -4, e: -3 },
+               result: '何もしないことにした。スズメが、えさをつつきに入ってきている。' },
+      craft: { label: '毎日1羽ずつ観察し、道具も消毒', desc: '人手と時間がかかるが、小さな変化にすぐ気づける。', d: { y: 4, q: 6, c: 6, e: 0 },
+               result: '毎日鶏を見回り、くつと道具を消毒した。鶏の顔つきまで覚えてしまった。' },
+      sci:   { label: '防鳥ネットと消毒そうで、入口を守る', desc: 'ネット代はかかるが、病気のもとを鶏舎に入れない。', d: { y: 5, q: 3, c: 3, e: 5 },
+               result: '防鳥ネットを張り直し、出入口に消毒そうを置いた。野鳥は入ってこなくなった。' }
+    },
+    memo: '鳥インフルエンザなどの伝染病は、発生すると多くの鶏を失い、卵も出荷できなくなる。野鳥やねずみを入れない、消毒する、毎日観察するなど、病気を「持ちこまない」ことが大切。',
+    react: {
+      boss:  { pos: '余計な出費がなくて助かる！', neg: 'また余計な出費だ…。' },
+      craft: { pos: '毎日見ていれば、変化はすぐわかる。', neg: '見もしないで飼うとは、運まかせだ。' },
+      sci:   { pos: '病気のもとを、入口で止められますね。', neg: '野鳥が、病気を運んでくることがあります。' }
+    }
+  },
+  {
+    id: 's5', title: '光の管理', bg: { kind: 'coop', mode: 'floor', night: true }, trade: '生産量がふえた ⇔ コスト・生き物の健康',
+    mat: { title: '資料：光と産卵', items: [
+      { fig: 'hikari', wide: true, cap: '鶏は、明るい時間が長いと、卵をよく産む。鶏舎では照明を使って、1日の明るい時間を14〜16時間ほどに調整する（点灯管理）。' } ] },
+    intro: '秋になり、日がだんだん短くなってきた。鶏は、明るい時間が短くなると、卵を産む数が減る。',
+    talk: {
+      boss: '「夜中も電気をつけっぱなしにしろ！ずっと明るければ、ずっと食べて、どんどん産むぞ。」',
+      craft: '「窓から日の光を入れて、朝と夕方だけ明かりを足すんだ。季節に合わせて、わしが毎日調整する。」',
+      sci: '「タイマーで、明るい時間を毎日同じ長さにしましょう。夜はしっかり暗くして、鶏を休ませます。」'
+    },
+    ch: {
+      boss:  { label: '夜中も電気をつけっぱなし', desc: 'よく食べて、よく産む。鶏が休めず、殻のうすい卵が増える。電気代もかかる。', d: { y: 6, q: -5, c: 2, e: -7 },
+               result: '一晩じゅう電気をつけた。鶏は、夜中もえさを食べ続けている。' },
+      craft: { label: '日の光を活かし、朝夕だけ明かりを足す', desc: '鶏にむりをさせない。毎日の調整に手間がかかり、産む数は増えない。', d: { y: 0, q: 6, c: 6, e: 3 },
+               result: '窓を開けて日の光を入れ、朝と夕方に明かりをつけた。' },
+      sci:   { label: 'タイマーで、明るい時間を一定にする', desc: '産卵が安定する。夜は暗くして、鶏を休ませる。', d: { y: 3, q: 3, c: 3, e: 5 },
+               result: 'タイマーで、明るい時間を毎日同じ長さにした。夜、鶏たちは静かに眠っている。' }
+    },
+    memo: '鶏には、日が長くなると卵をよく産む性質がある。この性質を利用して、照明で明るい時間を調整することを「点灯管理」という。光・温度などの環境を調節する技術の一つ。',
+    react: {
+      boss:  { pos: 'どんどん産め！出荷が楽しみだ！', neg: '電気代と手間がかさむな…。' },
+      craft: { pos: 'むりをさせない鶏は、いい卵を産む。', neg: '休めない鶏の卵は、殻がうすくなるぞ。' },
+      sci:   { pos: '鶏が、しっかり休めますね。', neg: '休めないと、鶏の体がもちません。' }
+    },
+    link: (F, key) => ((F.s3 === 'boss' || F.s4 === 'boss') && key === 'boss')
+      ? { d: { y: -5 }, note: '栄養のかたよったえさや、病気への備えがないまま、むりに産ませたので、弱る鶏が出てきた…（前の選択のえいきょう）' } : null
+  },
+  {
+    id: 's6', title: '毎日の世話', bg: { kind: 'coop', mode: 'cage', auto: true }, trade: '人の手がかからない ⇔ 仕事がへる',
+    intro: '鶏が卵を産み始めた。えさやりや卵集めなど、毎日の世話をどうするか決めよう。',
+    talk: {
+      boss: '「全部、機械にまかせよう！えさは自動で流し、卵はベルトで運ぶ。人手はいらん！」',
+      craft: '「人の手でえさをやり、卵を一つずつ集めるんだ。毎日顔を合わせるから、鶏の調子がわかる。」',
+      sci: '「機械も使いながら、カメラやセンサーで鶏のようすを見守りましょう。弱った鶏に、早く気づけます。」'
+    },
+    ch: {
+      boss:  { label: '機械にまかせて、人は見回らない', desc: '手間はゼロ。鶏の変化に気づきにくく、世話をする人の仕事もなくなる。', d: { y: 4, q: -4, c: 1, e: -4 },
+               result: '自動の機械を入れた。鶏舎には、もうだれも入らない。' },
+      craft: { label: '人の手で世話をして、卵を集める', desc: '人手が必要だが、鶏のようすがよくわかる。', d: { y: -2, q: 7, c: 4, e: 1 },
+               result: '毎朝、鶏に声をかけながら、卵を一つずつ集めた。' },
+      sci:   { label: '機械とセンサーで、鶏を見守る', desc: '設備にお金がかかるが、手間が減り、鶏の異常にも早く気づける。', d: { y: 3, q: 3, c: 6, e: 5 },
+               result: 'センサーとカメラを取りつけた。鶏の動きが少ないと、スマートフォンに知らせがとどく。' }
+    },
+    memo: '機械化・自動化で人の手間は減るが、その作業をしていた人の仕事が減ることもある。機械にまかせきりにせず、生き物のようすを観察することが大切。',
+    react: {
+      boss:  { pos: '手間が減れば、人件費もうくな！', neg: '毎日人を出すのか。人件費がかさむぞ。' },
+      craft: { pos: '鶏の顔色を見られるのは大きいぞ。', neg: '機械まかせでは、鶏の不調に気づけんぞ。' },
+      sci:   { pos: '技術で、鶏の健康を守れますね。', neg: '見守る目がないと、異常に気づくのがおくれます。' }
+    }
+  },
+  {
+    id: 's7', title: '鶏ふんの始末', bg: { kind: 'coop', mode: 'floor', dirty: true }, trade: '手間をかける ⇔ 清潔さ・環境',
+    mat: { title: '資料：鶏ふんは、資源になる', items: [
+      { fig: 'junkan', wide: true, cap: '鶏ふんを発酵させると、肥料（鶏ふん堆肥）になる。その肥料で作物を育て、作物がまた鶏のえさになる。' } ] },
+    intro: '鶏は毎日、たくさんのふんをする。鶏舎にたまるふんを、どうするか決めよう。',
+    talk: {
+      boss: '「ふん出しは、月に1回でいい！毎日やるなんて、手間のムダだ。」',
+      craft: '「毎日そうじして、床のもみがらも、こまめに替える。きれいな鶏舎から、きれいな卵が生まれるんだ。」',
+      sci: '「集めたふんは、発酵させて堆肥（たいひ）にしましょう。地元の畑で使ってもらえば、ごみではなく資源になります。」'
+    },
+    ch: {
+      boss:  { label: 'ふん出しは、月に1回だけ', desc: '手間はゼロ。においやハエが出て、卵もよごれやすい。', d: { y: 2, q: -5, c: -5, e: -3 },
+               result: 'ふんは、ためておくことにした。鶏舎に、つんとしたにおいがこもってきた。' },
+      craft: { label: '毎日そうじして、床も替える', desc: '手間はかかるが、鶏舎が清潔で、卵もきれい。', d: { y: -1, q: 6, c: 6, e: 1 },
+               result: '毎日ふんを出し、床のもみがらを替えた。鶏舎の空気が、すっきりしている。' },
+      sci:   { label: '定期的に集めて、堆肥にする', desc: '堆肥づくりの場所と手間が必要。できた堆肥は、畑で使える。', d: { y: 4, q: 2, c: 3, e: 4 },
+               result: '集めたふんを発酵させて、堆肥にした。近くのトマト農家が、喜んで持っていった。' }
+    },
+    memo: '家畜のふんは、そのままにすると、においや水のよごれの原因になる。そのため、きちんと管理することが法律で決められている。発酵させた鶏ふんは、窒素やリン酸を多くふくむ肥料になる。',
+    react: {
+      boss:  { pos: '手間が減ると、仕事が早いぞ！', neg: 'そんなに手間をかけて、割に合うのか？' },
+      craft: { pos: 'きれいな鶏舎は、気持ちがいいな。', neg: 'このにおい…近所から苦情が来るぞ。' },
+      sci:   { pos: 'ふんが、畑の栄養に変わりますね。', neg: 'ふんから出るガスは、鶏の体にもよくないんです。' }
+    }
+  },
+  {
+    id: 's8', title: '夏の暑さ', bg: { kind: 'coopout', heat: true }, trade: 'コスト ⇔ 被害のリスク',
+    intro: '天気予報によると、明日から記録的な猛暑になるらしい。鶏は汗をかけないので、暑さにとても弱い。',
+    talk: {
+      boss: '「予報は外れることもある。対策にお金をかけて、すずしかったら損だ。様子を見よう。」',
+      craft: '「大型の換気扇と冷房を入れるんだ。電気代はかかるが、ここまで育てた鶏を、弱らせたくない。」',
+      sci: '「屋根に日よけをかけて、細かい霧（ミスト）と送風で温度を下げましょう。少ない電気で、被害を小さくできます。」'
+    },
+    ch: {
+      boss:  { label: '何もせず、様子を見る', desc: 'お金も手間もかからない。大きな被害が出るかもしれない。', d: { y: -9, q: -3, c: -6, e: -1 },
+               result: '何もしないまま朝をむかえた。鶏舎の温度計は、ぐんぐん上がっていく。' },
+      craft: { label: '大型の換気扇と冷房を入れる', desc: '設備と電気代がかかる。鶏舎をしっかり冷やせる。', d: { y: 1, q: 4, c: 6, e: 0 },
+               result: '換気扇と冷房を、急いで取りつけた。鶏舎の中は、ひんやりしている。' },
+      sci:   { label: '日よけ・ミスト・送風で温度を下げる', desc: '効果はほどほどだが、少ない電気で被害を小さくできる。', d: { y: 2, q: 1, c: 3, e: 3 },
+               result: '屋根に日よけをかけ、ミストと送風機を回した。鶏は口を開けながらも、えさを食べている。' }
+    },
+    memo: '鶏は汗をかくことができず、暑いと口を開けて呼吸し、熱を逃がす。暑さでえさを食べなくなると、卵の数が減り、殻もうすくなる。温度や風通しを調節して、家畜に合った環境を保つことが大切。',
+    react: {
+      boss:  { pos: '出費をおさえられたのはいいぞ。', neg: '備えに金をかけすぎだ…。' },
+      craft: { pos: '鶏を守れたなら、それでいい。', neg: '鶏を見捨てるのか。暑さで倒れるぞ。' },
+      sci:   { pos: '被害を小さくする工夫ですね。', neg: '暑さで、鶏が弱ってしまいます。' }
+    },
+    link: (F, key) => (F.s7 === 'boss' && key !== 'craft')
+      ? { d: { y: -4 }, note: 'たまったふんからガスと熱が出て、鶏舎にこもり、暑さの被害が大きくなった…（ふんをためていた影響）' } : null
+  },
+  {
+    id: 's9', title: '卵の検査と出荷', bg: { kind: 'eggs' }, trade: '早さ・量 ⇔ 品質・安全',
+    mat: { title: '資料：卵の検査', items: [
+      { fig: 'kenran', wide: true, cap: '卵に光を当てると、殻のひびや中のようすが見える（検卵）。洗って、検査して、重さごとに分けてから、パックにつめる。' } ] },
+    intro: '卵が、毎日とれるようになった。卵をどう検査して、出荷するかを決めよう。',
+    talk: {
+      boss: '「検査なんていらん！集めた卵を、そのまま全部すぐ出荷だ。数が多いほど売上になる。」',
+      craft: '「1個ずつ光に当てて、ひびやよごれを見るんだ。合格した卵だけを、産んだその日に出す。」',
+      sci: '「洗って検査したあと、冷やして運びましょう。パックには、生で食べられる期限を、はっきり書きます。」'
+    },
+    ch: {
+      boss:  { label: '検査せず、全部すぐに出荷', desc: 'すぐ売上になる。ひびの入った卵や、よごれた卵もまじる。', d: { y: 6, q: -8, c: -3, e: 0 },
+               result: '集めた卵を、そのまま箱につめて出荷した。箱は、すぐにいっぱいになった。' },
+      craft: { label: '1個ずつ検卵し、その日のうちに出荷', desc: '品質は最高。手間がかかり、出荷できる数は減る。', d: { y: -3, q: 7, c: 3, e: 0 },
+               result: '1個ずつ光に当てて、合格した卵だけを、その日のうちに出荷した。' },
+      sci:   { label: '洗って検査し、冷やして運ぶ', desc: '安全と量のバランスがとれる。期限の表示で、安心して買える。', d: { y: 3, q: 3, c: 1, e: 2 },
+               result: '卵を洗って検査し、冷やしたまま道の駅へ運んだ。パックには、期限をはっきり書いた。' }
+    },
+    memo: '卵は、洗卵・検卵・重さによるサイズ分けをしてから出荷される。日本の卵の賞味期限は、「生で安全に食べられる期間」をもとに決められている。',
+    react: {
+      boss:  { pos: 'すぐ出荷できるのは強いぞ！', neg: '検査で数が減るのか。もったいない。' },
+      craft: { pos: '一つひとつ見た卵は、自信をもって出せる。', neg: 'ひびの入った卵まで出すとは…信用をなくすぞ。' },
+      sci:   { pos: '安全に食べてもらえますね。', neg: '割れた卵は、食中毒の原因になることがあります。' }
+    },
+    link: (F, key) => (F.s6 === 'boss')
+      ? { d: { y: -3, q: -3 }, note: '機械まかせで見回っていなかったので、弱った鶏や、割れた卵に気づくのがおくれた…（毎日の世話の影響）' } : null
+  },
+  {
+    id: 's10', title: '売り方', bg: { kind: 'eggshop' }, trade: '効率よくできる ⇔ 健康・環境',
+    intro: 'いよいよ道の駅で販売。卵の売り方を決めよう。',
+    talk: {
+      boss: '「安売りして、とにかく数をさばくんだ！プラスチックのパックに、どんどん詰めろ！」',
+      craft: '「「卵かけごはん専用」の特選卵として売るんだ。数は少なくても、いい値段で売れる。」',
+      sci: '「大きさがふぞろいな卵は、プリンやマヨネーズに加工しましょう。パックは紙にして、殻は畑の肥料にするんです。」'
+    },
+    ch: {
+      boss:  { label: '安売りして、大量に売る', desc: 'たくさん売れるが、1個あたりの利益は小さい。パックのごみも増える。', d: { y: 3, q: -4, c: -4, e: -3 },
+               result: '特価の卵パックを山積みにした。売り場は大にぎわいだ。' },
+      craft: { label: '特選卵として、少量だけ売る', desc: '高い値段で売る。買ってくれる人は限られる。', d: { y: -5, q: 5, c: 5, e: -1 },
+               result: '木箱にもみがらをしき、特選卵をならべて、レジの横に飾った。' },
+      sci:   { label: '規格外は加工品にして、むだなく売る', desc: '加工の設備と手間がかかるが、捨てる卵が減る。', d: { y: 4, q: 2, c: 4, e: 6 },
+               result: '規格外の卵でプリンを作った。「殻まで使い切る」と書いた札を立てた。' }
+    },
+    memo: '地元で作って地元で食べる「地産地消」や、捨てるはずのものを活かす加工は、輸送の環境負担や食品ロスを減らす。鶏の飼い方やえさを表示して、買う人が選べるようにする取り組みもある。',
+    react: {
+      boss:  { pos: '大にぎわいだ！売上が楽しみだ。', neg: 'そんな売り方では、もうからんぞ。' },
+      craft: { pos: 'いい箱に入ると、卵も誇らしげだ。', neg: '安売りでは、卵の値打ちが下がる。' },
+      sci:   { pos: '捨てるものが減ったのは、うれしいです。', neg: 'ごみと食品ロスが増えてしまいますね。' }
+    }
+  }
+];
+
+/* ---------- エンディングの文章 ---------- */
+const ENDINGS = {
+  S:    { title: '伝説の名物たまご、誕生！',
+          text: (n) => `${n}の卵は「おいしくて安心、しかも手ごろ」と大評判。道の駅には行列ができ、地元のニュースにも取り上げられた。生産量・品質・コスト・環境、どれも高いレベルでバランスがとれている。`,
+          boss: '売上も大満足だ！3人の意見を合わせたのが勝因だな。', craft: '味も申し分ない。立派な名物だ。', sci: '鶏も元気で、これなら長く続けられます。',
+          lesson: '意見のちがう人の考えを比べて、バランスよく決めると、みんなが納得できる答えに近づける。' },
+  A:    { title: 'みんなに愛される名物たまご',
+          text: (n) => `${n}の卵は口コミで広がり、リピーターが増えた。いくつか課題は残るが、バランスのよい経営ができている。`,
+          boss: 'いい売れ行きだ。もう少し利益が出れば言うことなしだな。', craft: 'お客さんの笑顔が何よりだ。', sci: '無理のない飼い方で、続けていけそうです。',
+          lesson: 'どこかをよくすると、どこかが苦しくなる。そのバランスを考えるのが大切。' },
+  B:    { title: 'まずまずの人気商品',
+          text: (n) => `${n}の卵は、そこそこ売れて、お客さんにも喜ばれた。気になる点を改善すれば、もっとよくなりそうだ。`,
+          boss: 'もう少し、うまくやれたかもしれんな。', craft: '悪くはないが、まだ伸びしろがあるぞ。', sci: '次は、どこを変えるとよいか考えてみましょう。',
+          lesson: '今回の選択のどこが課題だったか、メーターを見ながら考えてみよう。' },
+  low:  { title: '鶏が、思うように卵を産まなかった…',
+          text: (n) => `全体的に、思うような結果にならなかった。生産量・品質・環境のどこでつまずいたのか、${n}はもう一度考えてみることにした。`,
+          boss: 'うーん…もう一度やり直しだな。', craft: 'どこで迷ったか、思い返してみろ。', sci: '失敗から学べることが、きっとありますよ。',
+          lesson: 'うまくいかなかった場面を振り返って、別の選択をしてみよう。' },
+};
+const HEAD = {
+  econ: (n) => `${n}の卵は安く大量に出回って、道の駅は一時、大にぎわいになった。`,
+  qual: (n) => `${n}の卵は、「こんなにおいしい卵は初めて」と評判になった。`,
+  env:  (n) => `${n}の養鶏は、「鶏にも環境にもやさしい」と高く評価された。`
+};
+const BIASED = {
+  econ: {
+    qual: { title: '安売り競争のはて', tail: 'でも「黄身がうすくて、味がしない」という声が増え、リピーターが減ってしまった。', boss: '売れたのに、リピーターが来ない…なぜだ。', craft: '味をおろそかにすると、お客さんは離れていく。', sci: '品質が落ちると、せっかくの量も活かせませんね。' },
+    env:  { title: 'もうけ優先の落とし穴', tail: 'でも鶏にむりをさせ、においやふんの問題も起きて、近所からの苦情が増えた。このままでは、長く続けられない。', boss: '鶏のことまで、考えていなかった…。', craft: '卵は、鶏が産むものだ。大事にせんとな。', sci: '鶏が弱ると、卵の数も落ちてしまいます。' }
+  },
+  qual: {
+    econ: { title: '高嶺の花のたまご', tail: 'でも値段が高く、手間とコストがかさんで、売れ残りも出てしまった。', boss: 'この値段では、ふつうの人は買えんぞ。', craft: '味は最高なのに、なぜ売れんのだ…。', sci: '手間をかけすぎて、続けるのが大変そうです。' },
+    env:  { title: 'こだわりすぎの落とし穴', tail: 'でも味のために手をかけるあまり、鶏や環境への負担が大きくなってしまった。', boss: '品質はいいが、先に環境の問題が起きそうだな。', craft: '味ばかり追って、鶏を忘れていたか…。', sci: '元気な鶏がいてこそ、おいしい卵が生まれるんです。' }
+  },
+  env: {
+    econ: { title: '理想は高く、でも赤字', tail: 'でも設備や手間にお金がかかり、収入が追いつかない。このままでは、続けるのがむずかしい。', boss: 'いい取り組みだが、赤字では続けられんぞ。', craft: '安心はいいが、もう少し味にも力を入れたいな。', sci: '鶏を大切にしながら、収入も確保する方法を探したいです。' },
+    qual: { title: 'やさしいけれど、味は…', tail: 'でも味や見た目の品質は、まだ伸びしろがある。お客さんの反応は、いまひとつだった。', boss: '環境もいいが、売れなければ意味がないぞ。', craft: '安心なだけでは、リピーターは来んぞ。', sci: '品質も大事ですね。飼い方を見直してみます。' }
+  }
+};
+const LESSON = {
+  econ: 'もうけだけを追うと、品質や環境、生き物の健康がぎせいになって、長続きしない。',
+  qual: '品質だけを追うと、コストがふくらんだり、環境に負担がかかったりして、続かなくなる。',
+  env: '環境や生き物の健康だけを追うと、生産量やコスト、品質の面で苦しくなることもある。'
+};
+const VOICES = {
+  econ: { hi: '値段が手ごろで、家計にやさしい！', lo: 'ちょっと数が少ない／高い気がする…' },
+  qual: { hi: '黄身がこくておいしい！また買いたい。', lo: 'うーん、味がうすいかな…' },
+  env:  { hi: '鶏を大切に育てていて、安心して食べられる。', lo: '鶏の飼い方やにおいが、少し心配…。' }
+};
+
+/* ===== データと得点のしくみ（画面に依存しない部分） ===== */
+const CONFIG = {
+  SUBMIT_URL: 'https://script.google.com/a/macros/fuku-c.ed.jp/s/AKfycbz1UhknPTwIbp4X1SKVapY20HcQvc-wqbvM9AIvK74_iN1PgoVwjJ_uuVfBCLwdLgKkLQ/exec', // 生物育成シミュレーターと同じ提出先（空にすると「コピー」方式）
+  PHOTO_DIR: 'photos/',      // ここに写真を置くと、資料カードの図が写真に替わる
+  PHOTO_CREDITS: (typeof TOPIC !== 'undefined' && TOPIC.photoCredits) || {},
+  CLASSES: [1, 2, 3, 4, 5, 6, 7, 8],
+  MAX_NUM: 40,
+  CREDIT: '© Irie Kanji',
+  VERSION: '1.0'
+};
+
+const WHO = {
+  boss:  { name: '社長',   full: '社長',         color: '#C2410C', dark: '#9A3412', soft: '#FFEDD5', tag: '安く・多く・早く' },
+  craft: { name: '職人',   full: '職人の匠さん', color: '#1D4ED8', dark: '#1E3A8A', soft: '#DBEAFE', tag: '品質とおいしさ' },
+  sci:   { name: '研究者', full: '研究者の緑川さん', color: '#15803D', dark: '#14532D', soft: '#DCFCE7', tag: '環境と生き物の健康' }
+};
+
+const START = { y: 50, q: 50, c: 30, e: 50 };
+
+const NEUTRAL = {
+  boss:  ['ふむ…まあ悪くはないな。', 'なるほど、そう来たか。', '次の場面に期待だな。'],
+  craft: ['ふむ、そういう道もあるか。', '悪くない。だが油断はできんぞ。', 'まあ、様子を見ようじゃないか。'],
+  sci:   ['なるほど、一つの考え方ですね。', '結果を見て、また考えましょう。', '良い面と気になる面、どちらもありますね。']
+};
+const CHOSEN_GOOD = {
+  boss: ['よし、わかってくれたか！'], craft: ['うむ、いい判断だ。'], sci: ['ありがとう。きっとうまくいきます。']
+};
+const CHOSEN_BAD = {
+  boss: ['ううむ…思ったほどうまくいかんぞ。'], craft: ['むむ…読みが外れたか。'], sci: ['おや…予想と少し違いましたね。']
+};
+
+/* ---------- 得点と結末 ---------- */
+const clamp = (v) => Math.max(0, Math.min(100, Math.round(v)));
+
+function newState() {
+  return { v: { ...START }, flags: {}, picks: [], logs: [] };
+}
+
+function applyChoice(S, sc, key) {
+  const ch = sc.ch[key];
+  const d = { y: 0, q: 0, c: 0, e: 0, ...ch.d };
+  let note = null;
+  if (sc.link) {
+    const r = sc.link(S.flags, key);
+    if (r) { for (const k in r.d) d[k] += r.d[k]; note = r.note; }
+  }
+  for (const k of ['y', 'q', 'c', 'e']) S.v[k] = clamp(S.v[k] + d[k]);
+  S.flags[sc.id] = key;
+  S.picks.push(key);
+  S.logs.push({ id: sc.id, key, d, note });
+  return { d, note };
+}
+
+function axes(v) {
+  const econ = (v.y + (100 - v.c)) / 2;
+  return { econ: Math.round(econ), qual: v.q, env: v.e };
+}
+
+function judge(v) {
+  const a = axes(v);
+  const vals = [a.econ, a.qual, a.env];
+  const total = Math.round((a.econ + a.qual + a.env) / 3);
+  const bias = Math.max(...vals) - Math.min(...vals);
+  const top = a.econ >= a.qual && a.econ >= a.env ? 'econ' : (a.qual >= a.env ? 'qual' : 'env');
+  const weak = a.econ <= a.qual && a.econ <= a.env ? 'econ' : (a.qual <= a.env ? 'qual' : 'env');
+  let grade = total >= 65 ? 'S' : total >= 61 ? 'A' : total >= 55 ? 'B' : total >= 47 ? 'C' : 'D';
+  const order = ['D', 'C', 'B', 'A', 'S'];
+  const cap = (g, m) => (order.indexOf(g) > order.indexOf(m) ? m : g);
+  if (bias > 40) grade = cap(grade, 'C');
+  else if (bias > 25) grade = cap(grade, 'B');
+  else if (bias > 12) grade = cap(grade, 'A');
+  let type;
+  if (total < 47 && bias <= 25) type = 'low';
+  else if (bias > 25) type = top;                 // かたより：econ / qual / env
+  else if (grade === 'S') type = 'S';
+  else if (grade === 'A') type = 'A';
+  else type = 'B';
+  return { grade, total, bias, type, top, weak, axes: a };
+}
+
+function getEnding(J) {
+  if (J.type === 'econ' || J.type === 'qual' || J.type === 'env') {
+    const top = J.type, weak = (J.weak === top ? (top === 'econ' ? 'qual' : 'econ') : J.weak);
+    const b = BIASED[top][weak];
+    return { title: b.title, text: (n) => HEAD[top](n) + b.tail, boss: b.boss, craft: b.craft, sci: b.sci, lesson: LESSON[top] };
+  }
+  return ENDINGS[J.type];
+}
+
+
+if (typeof module !== 'undefined') {
+  module.exports = { TOPIC, getEnding, CONFIG, WHO, START, METERS, SCENES, STAGE1, STAGE1_FAIL, newState, applyChoice, axes, judge, ENDINGS, VOICES, NEUTRAL, CHOSEN_GOOD, CHOSEN_BAD, clamp };
+}
+
+/* ===== 背景と人物のイラスト（すべてSVG。画像ファイル不要） ===== */
+let _uid = 0;
+const W = 1280, H = 720;
+
+function defsSky(id, top, bot) {
+  return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bot}"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#${id})"/>`;
+}
+function sun(x, y, r, c = '#FFE27A') {
+  return `<circle cx="${x}" cy="${y}" r="${r * 1.7}" fill="${c}" opacity=".25"/><circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
+}
+function cloud(x, y, s = 1, c = '#fff', o = 0.95) {
+  return `<g transform="translate(${x} ${y}) scale(${s})" fill="${c}" opacity="${o}"><ellipse cx="0" cy="0" rx="70" ry="26"/><ellipse cx="-40" cy="8" rx="46" ry="22"/><ellipse cx="42" cy="6" rx="52" ry="24"/><ellipse cx="10" cy="-18" rx="42" ry="26"/></g>`;
+}
+function hills(y, c1 = '#8fd06a', c2 = '#6fb04a') {
+  return `<path d="M0 ${y} C 200 ${y - 90} 420 ${y - 20} 640 ${y - 70} S 1060 ${y - 110} 1280 ${y - 40} L1280 ${H} L0 ${H} Z" fill="${c1}"/>` +
+         `<path d="M0 ${y + 40} C 260 ${y - 20} 520 ${y + 50} 780 ${y} S 1120 ${y - 20} 1280 ${y + 30} L1280 ${H} L0 ${H} Z" fill="${c2}"/>`;
+}
+function tomato(x, y, r, c = '#e11d1d') {
+  return `<g><circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><ellipse cx="${x - r * 0.35}" cy="${y - r * 0.4}" rx="${r * 0.25}" ry="${r * 0.15}" fill="#fff" opacity=".45"/><path d="M${x - r * 0.5} ${y - r * 0.85} L${x} ${y - r * 0.6} L${x + r * 0.5} ${y - r * 0.85} L${x + r * 0.15} ${y - r * 0.95} L${x} ${y - r * 1.15} L${x - r * 0.15} ${y - r * 0.95} Z" fill="#2f8a3a"/></g>`;
+}
+function plant(x, y, h, o = {}) {
+  const leaf = o.leaf || '#3f9b3a', dark = o.dark || '#2e7d32', sc = o.s || 1;
+  let s = `<g>`;
+  s += `<path d="M${x} ${y} C ${x - 8} ${y - h * 0.4} ${x + 8} ${y - h * 0.7} ${x} ${y - h}" stroke="${o.stem || '#4d7c0f'}" stroke-width="${6 * sc}" fill="none" stroke-linecap="round"/>`;
+  for (let i = 0; i < 7; i++) {
+    const t = (i + 1) / 8, yy = y - h * t, dir = i % 2 ? 1 : -1, lx = x + dir * 30 * sc;
+    s += `<ellipse cx="${lx}" cy="${yy}" rx="${34 * sc}" ry="${13 * sc}" transform="rotate(${dir * -22} ${lx} ${yy})" fill="${i % 2 ? leaf : dark}"/>`;
+  }
+  s += `<ellipse cx="${x}" cy="${y - h}" rx="${22 * sc}" ry="${12 * sc}" fill="${leaf}"/>`;
+  if (o.fruit) {
+    const n = o.n || 3;
+    for (let j = 0; j < n; j++) {
+      const dir = j % 2 ? 1 : -1, fy = y - h * (0.18 + j * 0.15);
+      s += tomato(x + dir * 24 * sc, fy, 12 * sc, o.fruits ? o.fruits[j % o.fruits.length] : o.fruit);
+    }
+  }
+  return s + '</g>';
+}
+function greenhouseFrame(light = 0.16) {
+  let s = `<path d="M-60 ${H} L-60 330 Q640 -120 1340 330 L1340 ${H}" fill="rgba(255,255,255,${light})" stroke="rgba(255,255,255,.75)" stroke-width="8"/>`;
+  for (let i = 1; i < 6; i++) {
+    const x = i * 213;
+    s += `<path d="M${x} ${H} L${x} 250" stroke="rgba(255,255,255,.35)" stroke-width="4"/>`;
+  }
+  return s;
+}
+function soilGround(y, c1 = '#8b5e34', c2 = '#6e4723') {
+  let s = `<rect y="${y}" width="${W}" height="${H - y}" fill="${c1}"/>`;
+  for (let i = 0; i < 8; i++) {
+    const yy = y + 20 + i * ((H - y) / 8);
+    s += `<path d="M0 ${yy} Q 320 ${yy - 14} 640 ${yy} T 1280 ${yy}" stroke="${c2}" stroke-width="${6 + i * 1.2}" fill="none" opacity=".55"/>`;
+  }
+  return s;
+}
+function person(x, y, c = '#3b82f6', s = 1) {
+  return `<g transform="translate(${x} ${y}) scale(${s})"><circle cx="0" cy="-58" r="14" fill="#f2c9a5"/><path d="M-20 0 Q-20 -40 0 -42 Q20 -40 20 0 Z" fill="${c}"/></g>`;
+}
+function bug(x, y, c = '#365314') {
+  return `<g transform="translate(${x} ${y})"><ellipse rx="7" ry="4.5" fill="${c}"/><circle cx="-8" cy="0" r="3.2" fill="${c}"/><path d="M-4 3 l-3 5 M0 4 l0 6 M4 3 l3 5 M-4 -3 l-3 -5 M4 -3 l3 -5" stroke="${c}" stroke-width="1.4"/></g>`;
+}
+function crate(x, y, w, h, fruitR, n, c = '#d9a05b') {
+  let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${c}"/><path d="M${x} ${y + h * 0.5} H${x + w}" stroke="#a16207" stroke-width="3" opacity=".6"/>`;
+  for (let i = 0; i < n; i++) s += tomato(x + 18 + i * ((w - 36) / Math.max(1, n - 1)), y - fruitR * 0.2 + (i % 2) * 6, fruitR);
+  return s;
+}
+
+/* ---- 背景の種類 ---- */
+function bgSVG(kind, o = {}) {
+  const id = 'sk' + (++_uid);
+  let s = '';
+  switch (kind) {
+    case 'station': {            // 道の駅の外観（タイトル・導入・エンディング）
+      const mood = o.mood || 'normal';   // good / normal / bad
+      const top = mood === 'bad' ? '#a8b3c2' : '#8fd3ff', bot = mood === 'bad' ? '#e5e7eb' : '#eaf8ff';
+      s += defsSky(id, top, bot);
+      if (mood !== 'bad') s += sun(1120, 120, 56);
+      s += cloud(240, 130, 1.1) + cloud(820, 90, .8, '#fff', .9);
+      s += hills(430);
+      s += `<rect x="0" y="560" width="${W}" height="160" fill="#9ca3af"/><path d="M0 640 H1280" stroke="#fff" stroke-width="6" stroke-dasharray="40 30"/>`;
+      s += `<rect x="260" y="330" width="760" height="230" fill="#fff6e5"/>`;
+      s += `<polygon points="220,340 300,260 980,260 1060,340" fill="#c2410c"/><rect x="300" y="262" width="680" height="64" fill="#9a3412"/>`;
+      s += `<text x="640" y="308" font-size="40" font-weight="900" fill="#fff" text-anchor="middle" font-family="sans-serif" letter-spacing="6">道の駅　みのりの里</text>`;
+      for (let i = 0; i < 9; i++) s += `<rect x="${300 + i * 76}" y="390" width="62" height="34" fill="${i % 2 ? '#ef4444' : '#fff'}"/>`;
+      s += `<rect x="300" y="424" width="680" height="10" fill="#7f1d1d" opacity=".3"/>`;
+      s += `<rect x="330" y="448" width="150" height="112" fill="#bde4f7" stroke="#fff" stroke-width="6"/><rect x="800" y="448" width="150" height="112" fill="#bde4f7" stroke="#fff" stroke-width="6"/><rect x="560" y="448" width="160" height="112" fill="#7dd3fc" stroke="#fff" stroke-width="6"/>`;
+      s += crate(120, 560, 140, 44, 14, 5) + crate(1020, 560, 140, 44, 14, 5);
+      s += `<rect x="1090" y="250" width="8" height="190" fill="#6b7280"/><polygon points="1098,254 1170,282 1098,310" fill="#ef4444"/>`;
+      const crowd = mood === 'good' ? 9 : mood === 'bad' ? 0 : 3;
+      const cols = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#0ea5e9'];
+      for (let i = 0; i < crowd; i++) s += person(300 + i * 80 + (i % 2) * 30, 640 + (i % 3) * 18, cols[i % cols.length], 1.2);
+      if (mood === 'bad') s += `<rect width="${W}" height="${H}" fill="#1f2937" opacity=".12"/>`;
+      break;
+    }
+    case 'nursery': {
+      s += defsSky(id, '#dff4d8', '#f4fbe9');
+      s += greenhouseFrame(0.1);
+      s += `<rect y="470" width="${W}" height="250" fill="#a67c52"/><rect y="470" width="${W}" height="14" fill="#8b5e34"/>`;
+      for (let r = 0; r < 2; r++) {
+        const y = 400 + r * 150;
+        s += `<rect x="90" y="${y}" width="1100" height="16" rx="6" fill="#7c5a3a"/>`;
+        for (let t = 0; t < 7; t++) {
+          const x = 120 + t * 150;
+          s += `<rect x="${x}" y="${y - 44}" width="130" height="46" rx="6" fill="#374151"/>`;
+          for (let k = 0; k < 4; k++) s += `<ellipse cx="${x + 20 + k * 30}" cy="${y - 54}" rx="14" ry="20" fill="#4ade80"/><ellipse cx="${x + 20 + k * 30}" cy="${y - 66}" rx="8" ry="12" fill="#22c55e"/>`;
+        }
+      }
+      s += `<g><rect x="545" y="110" width="190" height="90" rx="10" fill="#fff" stroke="#c2410c" stroke-width="5"/><text x="640" y="168" font-size="34" font-weight="900" text-anchor="middle" fill="#c2410c" font-family="sans-serif">苗 売り場</text></g>`;
+      break;
+    }
+    case 'field': {
+      s += defsSky(id, '#bfe6ff', '#effaff') + sun(1100, 110, 50) + cloud(300, 120, 1) + hills(330, '#9ad56f', '#79b950');
+      s += soilGround(400);
+      const tool = o.tool;
+      if (tool === 'hoe') {
+        s += `<g transform="translate(860 360) rotate(18)"><rect x="-6" y="-40" width="12" height="300" rx="6" fill="#92400e"/><path d="M-70 258 L70 258 L50 300 L-50 300 Z" fill="#9ca3af"/></g>`;
+        s += `<g transform="translate(250 560)"><ellipse cx="0" cy="40" rx="80" ry="14" fill="#5b3a1a" opacity=".4"/><path d="M-70 40 Q-70 -30 0 -40 Q70 -30 70 40 Z" fill="#7c5a3a"/></g>`;
+      } else if (tool === 'ph') {
+        s += `<g transform="translate(820 380)"><rect x="-8" y="0" width="16" height="250" fill="#6b7280"/><rect x="-60" y="-100" width="120" height="110" rx="16" fill="#1f2937"/><rect x="-46" y="-86" width="92" height="46" rx="6" fill="#d9f99d"/><text x="0" y="-52" font-size="34" font-weight="900" text-anchor="middle" fill="#14532d" font-family="monospace">pH 6.2</text><circle cx="-28" cy="-18" r="9" fill="#22c55e"/><circle cx="0" cy="-18" r="9" fill="#f59e0b"/><circle cx="28" cy="-18" r="9" fill="#ef4444"/></g>`;
+      } else if (tool === 'bag') {
+        const bag = (x, y, c, lab, sub) => `<g transform="translate(${x} ${y}) scale(.6)"><rect x="-70" y="-120" width="140" height="170" rx="14" fill="${c}"/><rect x="-70" y="-120" width="140" height="28" rx="14" fill="#fff" opacity=".35"/><text x="0" y="-30" font-size="58" font-weight="900" text-anchor="middle" fill="#fff" font-family="sans-serif">${lab}</text><text x="0" y="14" font-size="18" font-weight="700" text-anchor="middle" fill="#fff" font-family="sans-serif">${sub}</text></g>`;
+        s += bag(790, 468, '#2f9e44', 'N', '窒素（葉）') + bag(872, 468, '#e8590c', 'P', 'リン酸（実）') + bag(954, 468, '#1c7ed6', 'K', 'カリウム（根）');
+      }
+      break;
+    }
+    case 'house': {
+      const mode = o.mode || 'normal';
+      s += defsSky(id, '#d9f2d0', '#f2fae8') + greenhouseFrame(0.1);
+      s += `<rect y="520" width="${W}" height="200" fill="#8b5e34"/>`;
+      const xs = [160, 360, 560, 760, 960, 1150];
+      if (mode === 'shoots') {
+        // 人物のあいだに、わき芽の出る位置（葉のつけ根）を大きく見せる
+        s += `<g transform="translate(325 185) scale(.7)">${axilArt(true)}</g><g transform="translate(955 185) scale(-.7 .7)">${axilArt(true)}</g>`;
+      } else {
+        xs.forEach((x) => { s += plant(x, 600, 380, { fruit: '#e11d1d', n: 3, fruits: ['#e11d1d', '#f59e0b', '#6dbf4b'], leaf: '#3f9b3a' }); });
+      }
+      if (mode === 'water') {
+        s += `<path d="M60 640 H1220" stroke="#1e3a8a" stroke-width="10" stroke-linecap="round"/>`;
+        xs.forEach((x) => { s += `<path d="M${x} 640 v22" stroke="#1e3a8a" stroke-width="6"/>`; for (let k = 0; k < 3; k++) s += `<path d="M${x - 8 + k * 8} ${664 + k * 12} q4 8 0 14 q-4 -6 0 -14 Z" fill="#38bdf8"/>`; });
+        s += `<g transform="translate(1110 330)"><rect x="-48" y="-30" width="96" height="60" rx="10" fill="#1f2937"/><text x="0" y="12" font-size="30" font-weight="900" text-anchor="middle" fill="#a7f3d0" font-family="monospace">6:00</text></g>`;
+      }
+      break;
+    }
+    case 'bugs': {
+      s += defsSky(id, '#d9f2d0', '#f2fae8') + greenhouseFrame(0.1);
+      s += `<rect y="540" width="${W}" height="180" fill="#8b5e34"/>`;
+      [220, 520, 820, 1100].forEach((x) => { s += plant(x, 620, 400, { fruit: '#e11d1d', n: 2, s: 1.15 }); });
+      const pts = [[180, 330], [260, 280], [500, 300], [560, 370], [810, 320], [880, 260], [1080, 340], [1130, 290], [400, 200], [980, 200]];
+      pts.forEach(([x, y]) => { s += bug(x, y, '#3f6212'); });
+      s += `<g transform="translate(640 150)"><ellipse rx="26" ry="14" fill="#f97316"/><circle cx="-24" cy="0" r="9" fill="#9a3412"/><path d="M-6 -12 q-22 -26 -4 -34 M6 -12 q22 -26 4 -34" stroke="#7c2d12" stroke-width="3" fill="none"/></g>`;
+      if (o.net) s += `<g opacity=".35" stroke="#fff" stroke-width="2">${Array.from({ length: 36 }, (_, i) => `<path d="M${i * 36} 0 V${H}"/>`).join('')}${Array.from({ length: 20 }, (_, i) => `<path d="M0 ${i * 36} H${W}"/>`).join('')}</g>`;
+      break;
+    }
+    case 'storm': {
+      s += defsSky(id, '#374151', '#9ca3af');
+      s += cloud(220, 120, 1.6, '#4b5563', .95) + cloud(700, 90, 1.8, '#374151', .95) + cloud(1100, 150, 1.4, '#4b5563', .95);
+      s += `<path d="M0 520 C 300 480 600 540 900 500 S 1200 520 1280 500 L1280 ${H} L0 ${H} Z" fill="#4d7c4f"/><rect y="580" width="${W}" height="140" fill="#6b4a2a"/>`;
+      [200, 430, 660, 890, 1100].forEach((x, i) => {
+        s += `<g transform="rotate(${14 + (i % 2) * 4} ${x} 600)">${plant(x, 600, 340, { fruit: '#d11d1d', n: 2, leaf: '#3a7d36', dark: '#2a5f28' })}</g>`;
+      });
+      for (let i = 0; i < 70; i++) { const x = (i * 97) % 1300, y = (i * 53) % 700; s += `<path d="M${x} ${y} l-14 36" stroke="#dbeafe" stroke-width="2.5" opacity=".7"/>`; }
+      s += `<path d="M90 300 q120 -30 240 0 M900 250 q140 -34 280 0 M450 380 q100 -26 200 0" stroke="#fff" stroke-width="5" fill="none" opacity=".6" stroke-linecap="round"/>`;
+      s += `<polygon points="760,0 720,140 770,140 730,260 830,110 780,110 810,0" fill="#fde047" opacity=".9"/>`;
+      break;
+    }
+    case 'harvest': {
+      s += defsSky(id, '#fde9c8', '#fff6e0') + greenhouseFrame(0.08);
+      s += `<rect y="560" width="${W}" height="160" fill="#8b5e34"/>`;
+      [140, 330, 940, 1140].forEach((x) => { s += plant(x, 640, 420, { fruit: '#e11d1d', n: 4, fruits: ['#e11d1d', '#ef4444', '#f97316', '#e11d1d'], s: 1.2 }); });
+      s += `<g transform="translate(640 560)"><path d="M-190 -30 Q-190 90 -110 100 H110 Q190 90 190 -30 Z" fill="#c8924f"/><path d="M-190 -30 H190" stroke="#9a6a2f" stroke-width="10"/>`;
+      for (let i = 0; i < 9; i++) s += tomato(-150 + i * 38, -50 + (i % 3) * -14, 26, i % 4 === 3 ? '#f97316' : '#e11d1d');
+      s += `</g>`;
+      break;
+    }
+    case 'market': {
+      s += defsSky(id, '#ffe3b8', '#fff4dc');
+      s += `<rect y="470" width="${W}" height="250" fill="#d4b48a"/>`;
+      s += `<rect x="150" y="190" width="980" height="40" fill="#b91c1c"/>`;
+      for (let i = 0; i < 14; i++) s += `<polygon points="${150 + i * 70},230 ${220 + i * 70},230 ${185 + i * 70},270" fill="${i % 2 ? '#fff' : '#ef4444'}"/>`;
+      s += `<rect x="180" y="270" width="920" height="40" fill="#fff6e5"/><text x="640" y="302" font-size="30" font-weight="900" text-anchor="middle" fill="#9a3412" font-family="sans-serif">みのりの里のトマト</text>`;
+      s += `<rect x="150" y="430" width="980" height="130" rx="10" fill="#a16207"/>`;
+      [0, 1, 2, 3].forEach((i) => { s += crate(190 + i * 235, 380, 190, 58, 17, 6); });
+      [[250, 'パック お買い得'], [560, '特選ギフト'], [860, 'ジュース・ソース']].forEach(([x, t]) => {
+        const w = t.length > 6 ? 210 : 150;
+        s += `<rect x="${x}" y="322" width="${w}" height="36" rx="6" fill="#fff"/><text x="${x + w / 2}" y="348" font-size="21" font-weight="900" text-anchor="middle" fill="#b91c1c" font-family="sans-serif">${t}</text>`;
+      });
+      const cols = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#a855f7'];
+      for (let i = 0; i < 6; i++) s += person(200 + i * 190, 690, cols[i % 5], 1.5);
+      break;
+    }
+    case 'fail': {
+      s += defsSky(id, '#8d9486', '#cfcf9a') + greenhouseFrame(0.08);
+      s += `<rect y="540" width="${W}" height="180" fill="#6b5233"/>`;
+      [140, 330, 520, 710, 900, 1100].forEach((x) => { s += plant(x, 620, 340, { leaf: '#b8a94a', dark: '#8f8a3a', stem: '#6b5a2a', fruit: '#8a7b3a', n: 1, s: 1.1 }); });
+      [[200, 300], [380, 240], [560, 330], [760, 260], [940, 310], [1120, 250], [300, 400], [820, 380]].forEach(([x, y]) => { s += bug(x, y, '#3f3f1a'); });
+      s += `<rect width="${W}" height="${H}" fill="#1f2937" opacity=".18"/>`;
+      break;
+    }
+    default:
+      s += (typeof bgExtra === 'function' && bgExtra(kind, o, id)) || defsSky(id, '#bfe6ff', '#effaff');
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-hidden="true">${s}</svg>`;
+}
+
+/* ---- 人物（表情つき） ---- */
+function charSVG(who, mood = 'normal') {
+  const skin = { boss: '#f3c9a5', craft: '#e6b08a', sci: '#f6d3b8' }[who];
+  const ink = '#1f2937';
+  let body = '', hair = '', acc = '', brows, eyes, mouth, extra = '';
+
+  if (who === 'boss') {
+    body = `<path d="M10 340 C10 252 62 214 120 214 C178 214 230 252 230 340 Z" fill="#1f2a44"/><polygon points="98,216 120,268 142,216" fill="#fff"/><polygon points="113,240 127,240 132,300 120,314 108,300" fill="#ea580c"/><path d="M98 216 L120 268 L84 232 Z M142 216 L120 268 L156 232 Z" fill="#111a30"/><circle cx="170" cy="266" r="9" fill="#facc15"/>`;
+    hair = `<path d="M60 112 C56 52 100 38 126 40 C168 42 188 70 180 112 C168 82 124 70 98 80 C80 86 66 100 60 112 Z" fill="#9ca3af"/>`;
+  } else if (who === 'craft') {
+    body = `<path d="M10 340 C10 252 62 214 120 214 C178 214 230 252 230 340 Z" fill="#1e40af"/><path d="M96 214 L120 270 L144 214" fill="#fff"/><path d="M60 250 L120 280 M180 250 L120 280" stroke="#fff" stroke-width="5" opacity=".7"/>`;
+    hair = `<path d="M60 108 C56 62 90 46 120 46 C152 46 186 62 180 108 L180 96 C150 74 90 74 60 96 Z" fill="#1f2937"/><rect x="56" y="84" width="128" height="20" rx="7" fill="#fff"/><rect x="56" y="90" width="128" height="7" fill="#1d4ed8"/><path d="M184 90 l26 -12 l-6 22 z M184 94 l24 14 l-18 8 z" fill="#fff"/>`;
+    extra = `<path d="M98 146 Q120 136 142 146 Q132 154 120 148 Q108 154 98 146 Z" fill="#374151"/>`;
+  } else {
+    body = `<path d="M10 340 C10 252 62 214 120 214 C178 214 230 252 230 340 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/><path d="M98 216 L120 262 L142 216 Z" fill="#16a34a"/><rect x="164" y="268" width="26" height="34" rx="4" fill="#e2e8f0"/><rect x="172" y="258" width="4" height="22" fill="#2563eb"/>`;
+    hair = `<circle cx="120" cy="36" r="22" fill="#3b2f2a"/><path d="M58 122 C52 60 90 42 120 42 C152 42 190 60 182 122 C176 96 166 80 120 78 C74 80 64 96 58 122 Z" fill="#3b2f2a"/>`;
+    acc = `<g fill="rgba(255,255,255,.35)" stroke="#374151" stroke-width="4"><circle cx="97" cy="122" r="22"/><circle cx="143" cy="122" r="22"/></g><path d="M119 122 h2" stroke="#374151" stroke-width="4"/>`;
+  }
+
+  const bw = who === 'craft' ? 8 : 5;
+  const B = (x1, y1, x2, y2) => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${ink}" stroke-width="${bw}" stroke-linecap="round"/>`;
+  if (mood === 'angry') brows = B(80, 98, 110, 108) + B(130, 108, 160, 98);
+  else if (mood === 'worried') brows = B(80, 108, 110, 97) + B(130, 97, 160, 108);
+  else if (mood === 'happy') brows = B(82, 100, 110, 98) + B(130, 98, 158, 100);
+  else brows = B(82, 102, 110, 101) + B(130, 101, 158, 102);
+
+  if (mood === 'happy') eyes = `<path d="M86 124 q11 -14 22 0" stroke="${ink}" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M132 124 q11 -14 22 0" stroke="${ink}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  else eyes = `<ellipse cx="97" cy="124" rx="5.5" ry="${mood === 'worried' ? 8 : 7}" fill="${ink}"/><ellipse cx="143" cy="124" rx="5.5" ry="${mood === 'worried' ? 8 : 7}" fill="${ink}"/><circle cx="99" cy="121" r="1.8" fill="#fff"/><circle cx="145" cy="121" r="1.8" fill="#fff"/>`;
+
+  const my = who === 'craft' ? 8 : 0;
+  if (mood === 'happy') mouth = `<path d="M100 ${152 + my} Q120 ${178 + my} 140 ${152 + my} Z" fill="#9f1239"/><path d="M108 ${160 + my} Q120 ${168 + my} 132 ${160 + my}" fill="#fecdd3"/>`;
+  else if (mood === 'angry') mouth = `<path d="M104 ${156 + my} L136 ${156 + my} L130 ${170 + my} L110 ${170 + my} Z" fill="#7f1d1d"/>`;
+  else if (mood === 'worried') mouth = `<path d="M102 ${164 + my} Q120 ${148 + my} 138 ${164 + my}" stroke="${ink}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  else mouth = `<path d="M106 ${158 + my} Q120 ${164 + my} 134 ${158 + my}" stroke="${ink}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+
+  let fx = '';
+  if (mood === 'happy') fx += `<ellipse cx="82" cy="146" rx="11" ry="7" fill="#fb7185" opacity=".45"/><ellipse cx="158" cy="146" rx="11" ry="7" fill="#fb7185" opacity=".45"/>`;
+  if (mood === 'worried') fx += `<path d="M182 92 q10 18 0 26 q-10 -8 0 -26 Z" fill="#7dd3fc"/>`;
+  if (mood === 'angry') fx += `<path d="M178 70 l8 -10 M190 80 l12 -4 M180 58 l2 -12" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 340" role="img" aria-hidden="true">
+${body}<rect x="104" y="184" width="32" height="36" fill="${skin}"/>
+<circle cx="58" cy="126" r="11" fill="${skin}"/><circle cx="182" cy="126" r="11" fill="${skin}"/>
+<ellipse cx="120" cy="120" rx="62" ry="68" fill="${skin}"/>
+${hair}${brows}${eyes}${acc}${extra}${mouth}${fx}</svg>`;
+}
+
+/* ---- レーダー（かたより）---- */
+function radarSVG(a) {
+  const cx = 130, cy = 120, R = 90;
+  const pt = (ang, v) => { const r = R * v / 100, t = (ang - 90) * Math.PI / 180; return [cx + r * Math.cos(t), cy + r * Math.sin(t)]; };
+  const angs = [0, 120, 240], vals = [a.econ, a.qual, a.env];
+  const poly = (v) => angs.map((g, i) => pt(g, v[i]).map((n) => n.toFixed(1)).join(',')).join(' ');
+  const labs = [['もうけ・量', 130, 22, 'middle'], ['品質', 256, 214, 'end'], ['環境', 4, 214, 'start']];
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 230" role="img" aria-label="もうけ・品質・環境のバランス">`;
+  [100, 66, 33].forEach((g) => { s += `<polygon points="${poly([g, g, g])}" fill="none" stroke="#9ca3af" stroke-width="1.5"/>`; });
+  angs.forEach((g) => { const p = pt(g, 100); s += `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#9ca3af"/>`; });
+  s += `<polygon points="${poly(vals)}" fill="#f59e0b" fill-opacity=".45" stroke="#b45309" stroke-width="3"/>`;
+  vals.forEach((v, i) => { const p = pt(angs[i], v); s += `<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#b45309"/>`; });
+  labs.forEach(([t, x, y, an], i) => { s += `<text x="${x}" y="${y}" font-size="15" font-weight="700" text-anchor="${an}" fill="#1f2937" font-family="sans-serif">${t} ${vals[i]}</text>`; });
+  return s + '</svg>';
+}
+
+/* ---- わき芽（葉のつけ根から出る芽）を正確に描く部品 ---- */
+function leafArt(x1, y1, x2, y2, sc) {
+  const dx = x2 - x1, dy = y2 - y1, ang = Math.atan2(dy, dx) * 180 / Math.PI;
+  const L = 58 * sc, Wd = 15 * sc;
+  const leaflet = (x, y, a, k, c) => `<path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a.toFixed(1)}) scale(${k})" d="M0 0 C ${L * .25} ${-Wd * 1.25} ${L * .7} ${-Wd} ${L} 0 C ${L * .7} ${Wd} ${L * .25} ${Wd * 1.25} 0 0 Z" fill="${c}" stroke="#2f6d24" stroke-width="1.5"/><path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a.toFixed(1)}) scale(${k})" d="M2 0 H ${L * .9}" stroke="#2f6d24" stroke-width="1.2" opacity=".6"/>`;
+  let s = `<path d="M${x1} ${y1} Q ${(x1 + x2) / 2} ${(y1 + y2) / 2 + 14 * sc} ${x2} ${y2}" stroke="#4f8f2f" stroke-width="${8 * sc}" fill="none" stroke-linecap="round"/>`;
+  [[.42, .8], [.68, .95]].forEach(([t, k]) => {
+    const x = x1 + dx * t, y = y1 + dy * t + 7 * sc * (1 - Math.abs(t - .5) * 2);
+    s += leaflet(x, y, ang - 62, k, '#4aa23c') + leaflet(x, y, ang + 62, k, '#3f9b3a');
+  });
+  s += leaflet(x2 - dx * .04, y2 - dy * .04, ang, 1.15, '#4aa23c');
+  return s;
+}
+function axilArt(mark) {
+  let s = '';
+  // 主茎
+  s += `<path d="M112 420 C108 300 116 140 110 0" stroke="#4f8f2f" stroke-width="26" fill="none"/>`;
+  s += `<path d="M105 420 C101 300 109 140 103 0" stroke="#7cc155" stroke-width="5" fill="none" opacity=".7"/>`;
+  // 葉（右下・左下）
+  s += leafArt(120, 300, 292, 222, 1);
+  s += leafArt(102, 392, -30, 340, .85);
+  s += leafArt(104, 110, -40, 40, .8);
+  // 花房（葉と葉の間の茎から出る）
+  s += `<path d="M100 205 Q 70 196 44 176" stroke="#5a9a34" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  [[44, 176], [58, 196], [28, 190]].forEach(([x, y]) => { s += `<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map((a) => `<ellipse rx="4" ry="10" transform="rotate(${a}) translate(0 -8)" fill="#facc15"/>`).join('')}<circle r="4" fill="#ca8a04"/></g>`; });
+  // わき芽（葉のつけ根＝主茎と葉の間から、ななめ上へ）
+  s += `<path d="M122 293 C134 262 150 226 172 190" stroke="#8fd14f" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+  const sl = (x, y, a, k) => `<path transform="translate(${x} ${y}) rotate(${a}) scale(${k})" d="M0 0 C 10 -14 28 -12 40 0 C 28 12 10 14 0 0 Z" fill="#a3e05f" stroke="#4d8f2a" stroke-width="1.5"/>`;
+  s += sl(150, 232, -160, .8) + sl(158, 214, 10, .8) + sl(168, 196, -120, .9) + sl(172, 190, -20, .9) + sl(172, 190, -68, 1.1);
+  if (mark) s += `<ellipse cx="152" cy="232" rx="50" ry="72" transform="rotate(28 152 232)" fill="none" stroke="#f97316" stroke-width="5" stroke-dasharray="10 7"/>`;
+  return s;
+}
+const FIG = {
+  wakime() {
+    const lab = (x, y, t, c = '#1f2937', sz = 22) => `<text x="${x}" y="${y}" font-size="${sz}" font-weight="900" fill="${c}" font-family="sans-serif">${t}</text>`;
+    const ln = (x1, y1, x2, y2, c = '#1f2937') => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c}" stroke-width="2.5"/><circle cx="${x2}" cy="${y2}" r="4" fill="${c}"/>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 430" role="img" aria-label="わき芽の位置の図"><rect width="620" height="430" fill="#f3faec"/>
+<g transform="translate(150 5)">${axilArt(true)}</g>
+${lab(300, 60, '主茎（しゅけい）')}${ln(296, 52, 268, 70)}
+${lab(360, 150, 'わき芽', '#c2410c', 30)}${lab(360, 178, 'ここをつみ取る', '#c2410c', 18)}${ln(356, 142, 326, 196, '#c2410c')}
+${lab(468, 290, '葉')}${ln(464, 284, 420, 250)}
+${lab(296, 372, '葉のつけ根', '#1f2937', 20)}${ln(292, 364, 274, 302)}
+${lab(14, 150, '花房（かぼう）', '#1f2937', 20)}${ln(120, 156, 186, 178)}
+</svg>`;
+  },
+  danryu() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="団粒構造の図"><rect width="520" height="330" fill="#fdf6e9"/>`;
+    s += `<rect x="20" y="50" width="230" height="230" rx="12" fill="#e9f5ff"/><rect x="270" y="50" width="230" height="230" rx="12" fill="#c9a77a"/>`;
+    const cl = [[70, 100], [140, 95], [205, 110], [60, 170], [128, 165], [198, 180], [80, 240], [150, 232], [212, 245]];
+    cl.forEach(([x, y]) => { for (let k = 0; k < 7; k++) { const a = k * 51, r = k ? 15 : 0; s += `<circle cx="${x + r * Math.cos(a)}" cy="${y + r * Math.sin(a)}" r="10" fill="${k % 2 ? '#8b5e34' : '#a47548'}"/>`; } });
+    for (let i = 0; i < 12; i++) for (let j = 0; j < 12; j++) s += `<circle cx="${281 + i * 19}" cy="${61 + j * 19}" r="9.5" fill="${(i + j) % 2 ? '#8b5e34' : '#7a5230'}"/>`;
+    s += `<text x="135" y="36" font-size="22" font-weight="900" text-anchor="middle" fill="#14532d" font-family="sans-serif">団粒構造の土</text><text x="385" y="36" font-size="22" font-weight="900" text-anchor="middle" fill="#7c2d12" font-family="sans-serif">かたくしまった土</text>`;
+    s += `<text x="135" y="310" font-size="17" font-weight="700" text-anchor="middle" fill="#1e3a8a" font-family="sans-serif">すき間に水と空気が入る</text><text x="385" y="310" font-size="17" font-weight="700" text-anchor="middle" fill="#7c2d12" font-family="sans-serif">すき間がなく、根がのびにくい</text>`;
+    return s + '</svg>';
+  },
+  ph() {
+    const cols = ['#e11d48', '#f43f5e', '#f97316', '#fb923c', '#facc15', '#bef264', '#4ade80', '#22c55e', '#14b8a6', '#0ea5e9', '#3b82f6', '#6366f1', '#7c3aed', '#6d28d9'];
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 330" role="img" aria-label="pHのものさし"><rect width="560" height="330" fill="#f8fafc"/>`;
+    cols.forEach((c, i) => { s += `<rect x="${28 + i * 36}" y="120" width="36" height="70" fill="${c}"/><text x="${46 + i * 36}" y="216" font-size="18" font-weight="700" text-anchor="middle" fill="#1f2937" font-family="sans-serif">${i + 1}</text>`; });
+    s += `<text x="100" y="100" font-size="24" font-weight="900" text-anchor="middle" fill="#be123c" font-family="sans-serif">酸性</text><text x="262" y="100" font-size="24" font-weight="900" text-anchor="middle" fill="#15803d" font-family="sans-serif">中性(7)</text><text x="450" y="100" font-size="24" font-weight="900" text-anchor="middle" fill="#4338ca" font-family="sans-serif">アルカリ性</text>`;
+    s += `<rect x="208" y="112" width="18" height="86" fill="none" stroke="#111827" stroke-width="4"/><path d="M217 240 V202" stroke="#111827" stroke-width="3"/><text x="217" y="268" font-size="22" font-weight="900" text-anchor="middle" fill="#111827" font-family="sans-serif">トマトに合うのは pH6.0〜6.5</text>`;
+    s += `<text x="280" y="46" font-size="24" font-weight="900" text-anchor="middle" fill="#1f2937" font-family="sans-serif">pHのものさし</text>`;
+    return s + '</svg>';
+  },
+  npk() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="肥料の三要素の図"><rect width="520" height="330" fill="#f3faec"/><rect y="250" width="520" height="80" fill="#a47548"/>`;
+    s += `<g transform="translate(120 250) scale(.62)">${plant(0, 0, 330, { fruit: '#e11d1d', n: 3 })}</g>`;
+    s += `<path d="M120 250 C100 280 80 290 60 310 M120 250 C125 285 140 295 150 318 M120 250 C150 270 170 280 190 300" stroke="#f5e6c8" stroke-width="4" fill="none"/>`;
+    const row = (y, c, l, n, t, tx, ty) => `<rect x="250" y="${y}" width="250" height="74" rx="12" fill="${c}"/><text x="290" y="${y + 52}" font-size="46" font-weight="900" text-anchor="middle" fill="#fff" font-family="sans-serif">${l}</text><text x="330" y="${y + 32}" font-size="21" font-weight="900" fill="#fff" font-family="sans-serif">${n}</text><text x="330" y="${y + 58}" font-size="17" font-weight="700" fill="#fff" font-family="sans-serif">${t}</text><path d="M250 ${y + 37} L${tx} ${ty}" stroke="${c}" stroke-width="4"/>`;
+    s += row(16, '#2f9e44', 'N', '窒素（ちっそ）', '葉や茎を育てる', 150, 90) + row(104, '#e8590c', 'P', 'リン酸', '花や実を育てる', 140, 200) + row(192, '#1c7ed6', 'K', 'カリウム', '根や実をじょうぶに', 160, 290);
+    return s + '</svg>';
+  },
+  kasei() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="化成肥料の絵"><rect width="520" height="330" fill="#eef2f7"/>`;
+    for (let i = 0; i < 90; i++) { const x = 40 + (i * 137) % 440, y = 60 + (i * 89) % 230, r = 11 + (i % 4) * 2; s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${['#d1d5db', '#e5e7eb', '#f3d7c4', '#cbd5e1'][i % 4]}" stroke="#9ca3af" stroke-width="1.5"/><circle cx="${x - r * .3}" cy="${y - r * .3}" r="${r * .25}" fill="#fff" opacity=".7"/>`; }
+    return s + `<text x="260" y="36" font-size="22" font-weight="900" text-anchor="middle" fill="#1f2937" font-family="sans-serif">化成肥料（絵）　表示例 8-8-8</text></svg>`;
+  },
+  aburakasu() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="油かすの絵"><rect width="520" height="330" fill="#f6efe3"/><path d="M40 300 Q260 40 480 300 Z" fill="#8a6a3a"/>`;
+    for (let i = 0; i < 160; i++) { const x = 70 + (i * 131) % 380, y = 120 + (i * 71) % 170; if (y > 300 - (1 - Math.abs(x - 260) / 220) * 250) s += `<rect x="${x}" y="${y}" width="9" height="5" rx="2" transform="rotate(${i * 37} ${x} ${y})" fill="${['#6b4f25', '#a8843f', '#5a4220'][i % 3]}"/>`; }
+    return s + `<text x="260" y="36" font-size="22" font-weight="900" text-anchor="middle" fill="#1f2937" font-family="sans-serif">油かす（絵）</text></svg>`;
+  },
+  taihi() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="堆肥の絵"><rect width="520" height="330" fill="#eef6e6"/><path d="M30 300 Q260 30 490 300 Z" fill="#4a3421"/>`;
+    for (let i = 0; i < 60; i++) { const x = 90 + (i * 127) % 340, y = 150 + (i * 67) % 140; s += `<path d="M${x} ${y} q10 -8 20 0 q-10 8 -20 0 Z" transform="rotate(${i * 53} ${x} ${y})" fill="${['#7a5a2e', '#8f7a3a', '#5d4426'][i % 3]}"/>`; }
+    return s + `<path d="M150 90 q8 -18 0 -34 M260 60 q8 -18 0 -34 M370 90 q8 -18 0 -34" stroke="#9ca3af" stroke-width="4" fill="none" stroke-linecap="round"/><text x="260" y="322" font-size="18" font-weight="700" text-anchor="middle" fill="#fff" font-family="sans-serif">堆肥（絵）発酵して熱が出る</text></svg>`;
+  },
+  sekkai() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="苦土石灰の絵"><rect width="520" height="330" fill="#a47548"/>`;
+    for (let i = 0; i < 220; i++) s += `<circle cx="${20 + (i * 149) % 480}" cy="${70 + (i * 83) % 240}" r="${3 + i % 4}" fill="#f8fafc" opacity=".9"/>`;
+    return s + `<rect width="520" height="50" fill="#fff" opacity=".85"/><text x="260" y="34" font-size="22" font-weight="900" text-anchor="middle" fill="#1f2937" font-family="sans-serif">苦土石灰（絵）白い粒や粉</text></svg>`;
+  },
+  aburamushi() {
+    const one = (x, y, k, r) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${k})"><path d="M-22 -14 l-16 -14 M-6 -18 l-6 -20 M12 -16 l8 -20 M-22 14 l-16 14 M-6 18 l-6 20 M12 16 l8 20" stroke="#365314" stroke-width="3"/><path d="M-40 -6 q-26 -22 -44 -8 M-40 6 q-26 22 -44 8" stroke="#365314" stroke-width="2.5" fill="none"/><ellipse cx="6" cy="0" rx="34" ry="24" fill="#84cc16" stroke="#3f6212" stroke-width="2.5"/><circle cx="-32" cy="0" r="13" fill="#65a30d" stroke="#3f6212" stroke-width="2.5"/><circle cx="-38" cy="-6" r="3" fill="#7f1d1d"/><circle cx="-38" cy="6" r="3" fill="#7f1d1d"/><path d="M30 -12 l18 -10 M30 12 l18 10" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/></g>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="アブラムシの絵"><rect width="520" height="330" fill="#cfe8b4"/><path d="M0 200 Q260 120 520 210" stroke="#7fb35a" stroke-width="10" fill="none"/>${one(250, 150, 2.1, -8)}${one(90, 250, .7, 30)}${one(150, 285, .6, -20)}${one(410, 270, .7, 160)}${one(450, 215, .55, 200)}<text x="14" y="30" font-size="20" font-weight="900" fill="#1f2937" font-family="sans-serif">アブラムシ（絵）</text><text x="350" y="60" font-size="16" font-weight="700" fill="#1f2937" font-family="sans-serif">おしりに2本の管</text><path d="M400 66 L352 120" stroke="#1f2937" stroke-width="2"/></svg>`;
+  },
+  konajirami() {
+    const one = (x, y, k, r) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${k})"><ellipse cx="0" cy="-4" rx="9" ry="20" fill="#fde68a" stroke="#a16207" stroke-width="1.5"/><path d="M0 -18 C -34 -6 -40 30 -24 44 C -8 40 0 10 0 -18 Z" fill="#fff" stroke="#94a3b8" stroke-width="2"/><path d="M0 -18 C 34 -6 40 30 24 44 C 8 40 0 10 0 -18 Z" fill="#fff" stroke="#94a3b8" stroke-width="2"/><circle cx="0" cy="-24" r="7" fill="#fcd34d" stroke="#a16207" stroke-width="1.5"/><circle cx="-4" cy="-26" r="2" fill="#7f1d1d"/><circle cx="4" cy="-26" r="2" fill="#7f1d1d"/></g>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="コナジラミの絵"><rect width="520" height="330" fill="#5f9e4a"/><path d="M0 165 H520 M130 165 L60 40 M260 165 L230 20 M390 165 L450 40 M130 165 L70 300 M260 165 L250 320 M390 165 L440 300" stroke="#8cc472" stroke-width="5" fill="none"/>${one(250, 160, 2.3, 10)}${one(90, 90, .8, -30)}${one(420, 100, .7, 40)}${one(120, 260, .75, 160)}${one(400, 255, .8, -140)}${one(330, 60, .6, 80)}<text x="14" y="30" font-size="20" font-weight="900" fill="#fff" font-family="sans-serif">コナジラミ（絵）葉の裏につく</text></svg>`;
+  },
+  tentoumushi() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="テントウムシの絵"><rect width="520" height="330" fill="#cfe8b4"/><path d="M0 250 Q260 180 520 250" stroke="#7fb35a" stroke-width="12" fill="none"/>
+<g transform="translate(230 170)"><path d="M-70 40 l-30 26 M-10 62 l-6 34 M60 46 l26 28" stroke="#111827" stroke-width="6"/><ellipse cx="-92" cy="0" rx="30" ry="42" fill="#111827"/><circle cx="-108" cy="-22" r="8" fill="#fff"/><circle cx="-108" cy="22" r="8" fill="#fff"/><ellipse cx="0" cy="0" rx="100" ry="76" fill="#dc2626" stroke="#7f1d1d" stroke-width="4"/><path d="M-98 0 H100" stroke="#7f1d1d" stroke-width="3"/>${[[-84, 0, 13], [-40, -40, 14], [-40, 40, 14], [20, -30, 15], [20, 30, 15], [66, -34, 11], [66, 34, 11]].filter(d => d[2]).map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#111827"/>`).join('')}</g>
+<g transform="translate(420 215) scale(.5)"><ellipse rx="34" ry="24" fill="#84cc16" stroke="#3f6212" stroke-width="3"/><circle cx="-32" r="13" fill="#65a30d" stroke="#3f6212" stroke-width="3"/></g><g transform="translate(455 240) scale(.4)"><ellipse rx="34" ry="24" fill="#84cc16" stroke="#3f6212" stroke-width="3"/><circle cx="-32" r="13" fill="#65a30d" stroke="#3f6212" stroke-width="3"/></g>
+<text x="14" y="30" font-size="20" font-weight="900" fill="#1f2937" font-family="sans-serif">ナナホシテントウ（絵）アブラムシを食べる</text></svg>`;
+  }
+};
+function figSVG(name) { return FIG[name] ? FIG[name]() : ''; }
+
+if (typeof module !== 'undefined') module.exports = { bgSVG, charSVG, radarSVG, figSVG };
+
+/* ===== マダイ編・採卵鶏編の背景と資料図 ===== */
+const TX = (x, y, t, sz = 22, c = '#1f2937', a = 'start', w = 900) => `<text x="${x}" y="${y}" font-size="${sz}" font-weight="${w}" fill="${c}" text-anchor="${a}" font-family="sans-serif">${t}</text>`;
+
+/* ---- 部品 ---- */
+function madai(x, y, s = 1, o = {}) {
+  const body = o.body || '#f0627a', back = o.back || '#d83a5c', belly = o.belly || '#ffe1e4', fin = o.fin || '#e04a66';
+  const fl = o.flip ? -1 : 1, rot = o.rot || 0;
+  return `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s * fl} ${s})">
+<path d="M52 0 L92 -30 Q84 0 92 30 Z" fill="${fin}"/>
+<path d="M-40 -26 Q0 -58 44 -18 L36 -10 Q0 -34 -34 -18 Z" fill="${fin}"/>
+<path d="M-70 4 Q-58 -34 -14 -36 Q34 -34 58 0 Q34 32 -14 34 Q-56 32 -70 4 Z" fill="${body}"/>
+<path d="M-66 -6 Q-54 -34 -14 -36 Q34 -34 58 0 Q20 -14 -20 -14 Q-50 -14 -66 -6 Z" fill="${back}" opacity=".75"/>
+<path d="M-62 14 Q-30 32 -6 32 Q26 30 50 6 Q10 22 -20 20 Q-46 20 -62 14 Z" fill="${belly}" opacity=".9"/>
+<path d="M-18 14 Q-4 30 12 18 Z" fill="${fin}"/><path d="M-30 -4 Q-14 8 -30 18" stroke="${back}" stroke-width="3" fill="none"/>
+<circle cx="-50" cy="-6" r="7.5" fill="#fff"/><circle cx="-51" cy="-6" r="4" fill="#111827"/>
+${o.dots === false ? '' : '<circle cx="-4" cy="-20" r="2.6" fill="#7dd3fc"/><circle cx="12" cy="-16" r="2.6" fill="#7dd3fc"/><circle cx="26" cy="-9" r="2.4" fill="#7dd3fc"/><circle cx="-18" cy="-22" r="2.4" fill="#7dd3fc"/>'}
+</g>`;
+}
+function hen(x, y, s = 1, o = {}) {
+  const c = o.c || '#ffffff', sh = o.sh || '#e5e7eb', fl = o.flip ? -1 : 1;
+  return `<g transform="translate(${x} ${y}) scale(${s * fl} ${s})">
+<path d="M-6 34 v24 m-8 0 h14 M12 34 v24 m-8 0 h14" stroke="#e8a317" stroke-width="5" fill="none" stroke-linecap="round"/>
+<path d="M-44 -8 Q-74 -44 -52 -58 Q-40 -34 -24 -22 Z" fill="${c}" stroke="${sh}" stroke-width="2"/>
+<ellipse cx="0" cy="6" rx="46" ry="34" fill="${c}" stroke="${sh}" stroke-width="2"/>
+<path d="M-28 4 Q-4 30 26 6 Q0 14 -28 4 Z" fill="${sh}"/>
+<path d="M22 -10 Q28 -52 48 -50 Q64 -46 58 -22 Q52 0 30 6 Z" fill="${c}" stroke="${sh}" stroke-width="2"/>
+<path d="M36 -52 q4 -14 10 -2 q6 -12 9 2 q8 -8 6 8 Z" fill="#dc2626"/>
+<path d="M62 -32 l16 5 l-15 6 Z" fill="#f59e0b"/><path d="M58 -20 q4 14 -4 14 q-6 -6 4 -14 Z" fill="#dc2626"/>
+${o.sleep ? '<path d="M46 -34 q5 4 10 0" stroke="#111827" stroke-width="2.5" fill="none"/>' : '<circle cx="50" cy="-34" r="3.6" fill="#111827"/>'}
+</g>`;
+}
+function chick(x, y, s = 1) {
+  return `<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="0" cy="8" rx="20" ry="17" fill="#fde047"/><circle cx="12" cy="-12" r="13" fill="#fde047"/><circle cx="16" cy="-14" r="2.4" fill="#111827"/><path d="M24 -11 l9 3 l-9 3 Z" fill="#f97316"/><path d="M-4 24 v8 M6 24 v8" stroke="#f97316" stroke-width="3"/></g>`;
+}
+function egg(x, y, r = 16, c = '#fff7ed', st = '#e7c9a0') {
+  return `<ellipse cx="${x}" cy="${y}" rx="${r * 0.78}" ry="${r}" fill="${c}" stroke="${st}" stroke-width="1.6"/><ellipse cx="${x - r * 0.25}" cy="${y - r * 0.4}" rx="${r * 0.18}" ry="${r * 0.28}" fill="#fff" opacity=".8"/>`;
+}
+function seaBase(id, o = {}) {
+  const top = o.top || '#9fd8ff', bot = o.bot || '#eaf8ff', s1 = o.s1 || '#3aa7d8', s2 = o.s2 || '#1c6ea4';
+  let s = defsSky(id, top, bot);
+  s += `<defs><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s1}"/><stop offset="1" stop-color="${s2}"/></linearGradient></defs>`;
+  s += `<path d="M0 290 C 200 230 380 262 560 250 S 980 205 1280 268 L1280 300 L0 300 Z" fill="${o.hill || '#6fb04a'}"/>`;
+  s += `<rect y="296" width="${W}" height="${H - 296}" fill="url(#${id}s)"/>`;
+  for (let i = 0; i < 14; i++) s += `<path d="M${(i * 173) % 1200} ${330 + (i * 61) % 360} q30 -10 60 0 t60 0" stroke="#fff" stroke-width="3" fill="none" opacity="${o.wave || .35}"/>`;
+  return s;
+}
+function cage(x, y, w = 300, o = {}) {
+  const h = w * 0.34, sk = w * 0.22;
+  let s = `<g transform="translate(${x} ${y})">`;
+  s += `<path d="M${sk} 0 H${w + sk} L${w} ${h} H0 Z" fill="${o.water || '#1b5f8f'}" opacity=".55"/>`;
+  s += `<g stroke="#e5e7eb" stroke-width="1.5" opacity=".5">${Array.from({ length: 9 }, (_, i) => `<path d="M${sk + i * w / 9} 0 L${i * w / 9} ${h}"/>`).join('')}${Array.from({ length: 4 }, (_, i) => `<path d="M${sk - sk * (i + 1) / 5} ${h * (i + 1) / 5} h${w}"/>`).join('')}</g>`;
+  s += `<path d="M${sk} 0 H${w + sk} L${w} ${h} H0 Z" fill="none" stroke="#f59e0b" stroke-width="9" stroke-linejoin="round"/>`;
+  [[sk, 0], [w + sk, 0], [w, h], [0, h], [sk + w / 2, 0], [w / 2, h]].forEach(([a, b]) => { s += `<circle cx="${a}" cy="${b}" r="11" fill="#fb923c" stroke="#c2410c" stroke-width="2"/>`; });
+  if (o.shade) s += `<path d="M${sk + 6} 4 H${w + sk - 6} L${w - 4} ${h - 4} H6 Z" fill="#111827" opacity=".82"/><path d="M${sk + 6} 4 H${w + sk - 6} L${w - 4} ${h - 4} H6 Z" fill="none" stroke="#374151" stroke-width="3" stroke-dasharray="10 8"/>`;
+  if (o.feeder) s += `<g transform="translate(${w * 0.55} ${h * 0.2})"><rect x="-34" y="-74" width="68" height="60" rx="8" fill="#e5e7eb" stroke="#6b7280" stroke-width="3"/><path d="M-22 -14 L0 14 L22 -14 Z" fill="#9ca3af"/><rect x="-22" y="-62" width="44" height="18" rx="4" fill="#1f2937"/><text x="0" y="-48" font-size="14" font-weight="900" text-anchor="middle" fill="#a7f3d0" font-family="monospace">AUTO</text>${Array.from({ length: 7 }, (_, i) => `<circle cx="${-18 + i * 6}" cy="${22 + (i % 3) * 9}" r="3" fill="#92400e"/>`).join('')}</g>`;
+  if (o.fish) for (let i = 0; i < o.fish; i++) s += madai(sk + 30 + (i * 67) % (w - 80), 18 + (i * 29) % (h - 30), .22, { flip: i % 2 });
+  return s + '</g>';
+}
+function boat(x, y, s = 1) {
+  return `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-110 0 H110 L84 40 H-80 Z" fill="#f8fafc" stroke="#1e3a8a" stroke-width="4"/><path d="M-104 12 H104" stroke="#1d4ed8" stroke-width="8"/><rect x="-30" y="-46" width="64" height="46" rx="6" fill="#dbeafe" stroke="#1e3a8a" stroke-width="4"/><rect x="-18" y="-36" width="18" height="18" fill="#7dd3fc"/><rect x="6" y="-36" width="18" height="18" fill="#7dd3fc"/><path d="M50 -4 V-76" stroke="#6b7280" stroke-width="4"/><polygon points="50,-76 82,-64 50,-52" fill="#ef4444"/></g>`;
+}
+function shopBase(id, title, signs) {
+  let s = defsSky(id, '#ffe3b8', '#fff4dc');
+  s += `<rect y="470" width="${W}" height="250" fill="#d4b48a"/><rect x="150" y="190" width="980" height="40" fill="#b91c1c"/>`;
+  for (let i = 0; i < 14; i++) s += `<polygon points="${150 + i * 70},230 ${220 + i * 70},230 ${185 + i * 70},270" fill="${i % 2 ? '#fff' : '#ef4444'}"/>`;
+  s += `<rect x="180" y="270" width="920" height="40" fill="#fff6e5"/>` + TX(640, 302, title, 30, '#9a3412', 'middle');
+  s += `<rect x="150" y="430" width="980" height="130" rx="10" fill="#a16207"/>`;
+  signs.forEach(([x, t]) => { const w = t.length > 6 ? 210 : 150; s += `<rect x="${x}" y="322" width="${w}" height="36" rx="6" fill="#fff"/>` + TX(x + w / 2, 348, t, 21, '#b91c1c', 'middle'); });
+  const cols = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#a855f7'];
+  for (let i = 0; i < 6; i++) s += person(200 + i * 190, 690, cols[i % 5], 1.5);
+  return s;
+}
+function coopWalls(id, night) {
+  let s = defsSky(id, night ? '#3b3a52' : '#f6e7c8', night ? '#57536e' : '#fbf3df');
+  for (let i = 0; i < 4; i++) {
+    const x = 90 + i * 300;
+    s += `<rect x="${x}" y="110" width="200" height="130" rx="8" fill="${night ? '#141a33' : '#bfe6ff'}" stroke="#8b5e34" stroke-width="10"/><path d="M${x + 100} 110 V240 M${x} 175 H${x + 200}" stroke="#8b5e34" stroke-width="6"/>`;
+    if (night && i === 2) s += `<circle cx="${x + 140}" cy="150" r="18" fill="#fef9c3"/><circle cx="${x + 148}" cy="144" r="16" fill="#141a33"/>`;
+    if (!night && i === 1) s += cloud(x + 70, 150, .45, '#fff', .9);
+  }
+  s += `<path d="M0 70 H1280" stroke="#8b5e34" stroke-width="16"/>`;
+  [220, 640, 1060].forEach((x) => {
+    s += `<path d="M${x} 78 V96" stroke="#374151" stroke-width="4"/><path d="M${x - 26} 112 Q${x} 84 ${x + 26} 112 Z" fill="#374151"/>`;
+    if (night) s += `<circle cx="${x}" cy="116" r="12" fill="#fef08a"/><path d="M${x - 130} 470 L${x - 24} 116 H${x + 24} L${x + 130} 470 Z" fill="#fef08a" opacity=".22"/>`;
+    else s += `<circle cx="${x}" cy="116" r="10" fill="#e5e7eb"/>`;
+  });
+  return s;
+}
+
+/* ---- 背景 ---- */
+function bgExtra(kind, o, id) {
+  let s = '';
+  switch (kind) {
+    /* ===== マダイ編 ===== */
+    case 'port': {
+      s += seaBase(id);
+      s += boat(1010, 330, .9) + boat(250, 318, .6);
+      s += `<rect y="400" width="${W}" height="320" fill="#b8bec9"/><rect y="400" width="${W}" height="14" fill="#8d95a3"/>`;
+      s += `<g><rect x="520" y="96" width="240" height="96" rx="10" fill="#fff" stroke="#1d4ed8" stroke-width="5"/>${TX(640, 140, '稚魚（ちぎょ）', 30, '#1d4ed8', 'middle')}${TX(640, 176, 'マダイ', 26, '#be123c', 'middle')}</g>`;
+      [[110, '#ea580c'], [480, '#1d4ed8'], [850, '#15803d']].forEach(([x, c], i) => {
+        s += `<rect x="${x}" y="300" width="320" height="170" rx="16" fill="#0c4a6e" stroke="${c}" stroke-width="10"/><rect x="${x + 12}" y="312" width="296" height="146" rx="8" fill="#38bdf8" opacity=".85"/>`;
+        const n = [11, 6, 7][i];
+        for (let k = 0; k < n; k++) s += madai(x + 46 + (k * 83) % 240, 340 + (k * 47) % 100, [.2, .27, .25][i], { flip: k % 2, body: i === 0 && k % 3 === 0 ? '#f59bab' : undefined });
+        s += `<path d="M${x + 20} 326 q20 -8 40 0 t40 0" stroke="#fff" stroke-width="3" fill="none" opacity=".6"/>`;
+      });
+      break;
+    }
+    case 'sea': {
+      s += seaBase(id) + sun(1130, 100, 48) + cloud(260, 110, .9) + cloud(820, 80, .7, '#fff', .9);
+      s += cage(70, 330, 300, { fish: 5, shade: false });
+      s += cage(480, 318, 320, { fish: o.shade ? 0 : 6, shade: o.shade, feeder: o.feeder });
+      s += cage(910, 340, 290, { fish: 5 });
+      if (o.buoy) s += `<g transform="translate(420 300)"><path d="M0 0 V-70" stroke="#6b7280" stroke-width="5"/><rect x="-62" y="-150" width="124" height="84" rx="10" fill="#1f2937"/>${TX(0, -118, '水温 22℃', 20, '#a7f3d0', 'middle')}${TX(0, -88, '酸素 OK', 20, '#fde68a', 'middle')}<ellipse cx="0" cy="6" rx="34" ry="14" fill="#facc15" stroke="#a16207" stroke-width="3"/></g>`;
+      if (o.feeder) s += boat(1090, 300, .55);
+      break;
+    }
+    case 'under': {
+      const mode = o.mode || 'normal';
+      const murky = mode === 'raw' || mode === 'sick';
+      s += defsSky(id, murky ? '#5f9c8f' : '#4fc3f7', murky ? '#2f5d57' : '#0b5a8a');
+      for (let i = 0; i < 6; i++) s += `<path d="M${120 + i * 210} 0 L${40 + i * 210} 720 h90 L${190 + i * 210} 0 Z" fill="#fff" opacity="${murky ? .04 : .09}"/>`;
+      s += `<g stroke="#e2e8f0" stroke-width="2" opacity=".28">${Array.from({ length: 27 }, (_, i) => `<path d="M${i * 50} 0 V720"/>`).join('')}${Array.from({ length: 15 }, (_, i) => `<path d="M0 ${i * 50} H1280"/>`).join('')}</g>`;
+      const n = mode === 'dense' ? 34 : 12;
+      for (let k = 0; k < n; k++) {
+        const x = 70 + ((k * 0.7548776662 + 0.13) % 1) * 1150, y = 100 + ((k * 0.5698402910 + 0.31) % 1) * 400, sc = mode === 'dense' ? .62 : .8 + (k % 3) * .12;
+        const sick = mode === 'sick' && k % 3 === 0;
+        s += madai(x, y, sc, { flip: k % 2, rot: sick ? 24 : (k % 5) * 3 - 6, body: sick ? '#d6a5ad' : undefined, back: sick ? '#b98591' : undefined });
+      }
+      if (mode === 'pellet') for (let k = 0; k < 46; k++) s += `<circle cx="${40 + (k * 157) % 1200}" cy="${60 + (k * 89) % 420}" r="6" fill="#8b5a2b" stroke="#5b3a1a" stroke-width="1.5"/>`;
+      if (mode === 'raw') for (let k = 0; k < 16; k++) { const x = 60 + (k * 197) % 1160, y = 70 + (k * 113) % 400; s += `<g transform="translate(${x} ${y}) rotate(${k * 40})"><path d="M-24 0 Q0 -12 24 0 Q0 12 -24 0 Z" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/><path d="M24 0 l12 -8 v16 Z" fill="#94a3b8"/></g>`; }
+      if (murky) { s += `<rect width="${W}" height="${H}" fill="#6b5b2a" opacity=".22"/>`; for (let k = 0; k < 40; k++) s += `<circle cx="${(k * 173) % 1280}" cy="${(k * 97) % 720}" r="${4 + k % 5}" fill="#d6c78a" opacity=".3"/>`; }
+      if (mode === 'sick') for (let k = 0; k < 26; k++) { const x = (k * 50) % 1280, y = k % 2 ? 40 + (k * 31) % 60 : 430 + (k * 17) % 40; s += `<path d="M${x} ${y} q8 -26 0 -46 q16 14 10 46 Z" fill="#3f7d3a"/><ellipse cx="${x + 26}" cy="${y - 6}" rx="12" ry="8" fill="#d1d5db" stroke="#6b7280" stroke-width="2"/>`; }
+      break;
+    }
+    case 'redtide': {
+      s += seaBase(id, { top: '#c9c3b6', bot: '#efe6d8', s1: '#b0563a', s2: '#6e2f25', hill: '#7d8f5a', wave: .18 });
+      for (let i = 0; i < 9; i++) s += `<ellipse cx="${(i * 211) % 1280}" cy="${350 + (i * 83) % 330}" rx="${150 + (i % 3) * 60}" ry="${26 + (i % 2) * 14}" fill="#d9603a" opacity=".45"/>`;
+      s += `<path d="M0 296 H420 Q520 360 700 330 T1280 420 V296 Z" fill="#2f86b8" opacity=".55"/>`;
+      s += cage(120, 420, 300, { water: '#7a2f22', fish: 4 }) + cage(820, 400, 300, { water: '#7a2f22', fish: 4 });
+      s += `<g transform="translate(640 150)"><polygon points="0,-70 78,60 -78,60" fill="#fde047" stroke="#b45309" stroke-width="8" stroke-linejoin="round"/>${TX(0, 44, '！', 84, '#b45309', 'middle')}</g>` + TX(640, 250, '赤潮 注意報', 30, '#7f1d1d', 'middle');
+      break;
+    }
+    case 'landing': {
+      s += seaBase(id, { top: '#ffd9a8', bot: '#fff2dc', s1: '#5ab0d6', s2: '#2a78a8' }) + sun(180, 250, 44, '#ffb347');
+      s += boat(960, 356, 1.3);
+      s += `<rect y="430" width="${W}" height="290" fill="#b8bec9"/><rect y="430" width="${W}" height="14" fill="#8d95a3"/>`;
+      [[150, 360], [470, 372], [300, 250]].forEach(([x, y], i) => {
+        s += `<rect x="${x}" y="${y}" width="270" height="110" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="5"/><rect x="${x + 12}" y="${y + 12}" width="246" height="86" rx="6" fill="#e0f2fe"/>`;
+        for (let k = 0; k < 9; k++) s += `<polygon points="${x + 22 + k * 27},${y + 92} ${x + 34 + k * 27},${y + 70 + (k % 2) * 8} ${x + 46 + k * 27},${y + 92}" fill="#fff" opacity=".9"/>`;
+        s += madai(x + 96, y + 52, .78) + madai(x + 180, y + 60, .7, { flip: true });
+      });
+      break;
+    }
+    case 'fishshop': {
+      s += shopBase(id, 'みのりの里のマダイ', [[250, 'お買い得'], [560, '特選みのり鯛'], [860, '鯛めし・干物']]);
+      [0, 1, 2, 3].forEach((i) => {
+        const x = 190 + i * 235;
+        s += `<rect x="${x}" y="372" width="190" height="64" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="4"/><rect x="${x + 8}" y="380" width="174" height="48" rx="5" fill="#e0f2fe"/>`;
+        s += madai(x + 62, 402, .5) + madai(x + 130, 408, .46, { flip: true });
+      });
+      break;
+    }
+    case 'failsea': {
+      s += seaBase(id, { top: '#7c7f86', bot: '#b9b2a6', s1: '#8a4a36', s2: '#4a2520', hill: '#5c6b4a', wave: .12 });
+      for (let i = 0; i < 8; i++) s += `<ellipse cx="${(i * 233) % 1280}" cy="${350 + (i * 91) % 330}" rx="${170 + (i % 3) * 50}" ry="${28 + (i % 2) * 12}" fill="#c2552f" opacity=".4"/>`;
+      s += cage(110, 400, 320, { water: '#5a241c' }) + cage(800, 380, 330, { water: '#5a241c' });
+      [[210, 440], [330, 470], [520, 560], [900, 430], [1040, 460], [700, 620], [150, 610], [1150, 600]].forEach(([x, y], i) => { s += madai(x, y, .5, { rot: 180 + (i % 3) * 8 - 8, body: '#e9e2e0', back: '#cfc7c5', belly: '#ffffff', fin: '#d6cfcd', dots: false, flip: i % 2 }); });
+      s += `<rect width="${W}" height="${H}" fill="#1f2937" opacity=".2"/>`;
+      break;
+    }
+
+    /* ===== 採卵鶏編 ===== */
+    case 'chicks': {
+      s += coopWalls(id, false);
+      s += `<rect y="470" width="${W}" height="250" fill="#e3c58f"/><rect y="470" width="${W}" height="12" fill="#c9a66b"/>`;
+      s += `<g><rect x="500" y="8" width="280" height="52" rx="10" fill="#fff" stroke="#c2410c" stroke-width="5"/>${TX(640, 46, 'ヒナを育てる農場', 26, '#c2410c', 'middle')}</g>`;
+      [[100, '#ea580c'], [470, '#1d4ed8'], [840, '#15803d']].forEach(([x, c], i) => {
+        s += `<path d="M${x + 170} 250 V300" stroke="#6b7280" stroke-width="4"/><path d="M${x + 110} 330 Q${x + 170} 280 ${x + 230} 330 Z" fill="#ef4444"/><path d="M${x + 60} 470 L${x + 130} 330 H${x + 210} L${x + 280} 470 Z" fill="#fca5a5" opacity=".28"/>`;
+        s += `<rect x="${x}" y="380" width="340" height="110" rx="12" fill="#c9a66b" stroke="${c}" stroke-width="9"/><rect x="${x + 12}" y="392" width="316" height="86" rx="6" fill="#f3e2bd"/>`;
+        const n = [9, 5, 6][i];
+        for (let k = 0; k < n; k++) s += chick(x + 40 + (k * 71) % 270, 424 + (k * 23) % 34, [.62, .8, .78][i]);
+      });
+      break;
+    }
+    case 'coop': {
+      const night = !!o.night, mode = o.mode || 'floor';
+      s += coopWalls(id, night);
+      if (mode === 'cage') {
+        s += `<rect y="500" width="${W}" height="220" fill="#9ca3af"/>`;
+        for (let r = 0; r < 3; r++) {
+          const y = 250 + r * 86;
+          s += `<rect x="40" y="${y}" width="1200" height="78" fill="#d1d5db" opacity=".55"/>`;
+          for (let k = 0; k < 13; k++) s += hen(96 + k * 92, y + 40, .44, { flip: (k + r) % 2, sleep: false });
+          s += `<g stroke="#4b5563" stroke-width="3">${Array.from({ length: 41 }, (_, i) => `<path d="M${40 + i * 30} ${y} v78"/>`).join('')}<path d="M40 ${y} H1240 M40 ${y + 78} H1240" stroke-width="6"/></g>`;
+          s += `<path d="M40 ${y + 84} H1240" stroke="#6b7280" stroke-width="8"/>`;
+          for (let k = 0; k < 16; k++) s += egg(70 + k * 76 + r * 20, y + 80, 9);
+        }
+        if (o.auto) s += `<g transform="translate(1130 180)"><rect x="-80" y="-44" width="160" height="88" rx="12" fill="#1f2937"/>${TX(0, -8, '全自動', 26, '#a7f3d0', 'middle')}${TX(0, 26, 'えさ・集卵', 18, '#fde68a', 'middle')}</g><path d="M40 236 H1240" stroke="#f59e0b" stroke-width="10"/>`;
+      } else {
+        s += `<rect y="440" width="${W}" height="280" fill="${o.dirty ? '#a08a5a' : '#e8cf9a'}"/><rect y="440" width="${W}" height="10" fill="#c9a66b"/>`;
+        for (let k = 0; k < 60; k++) s += `<path d="M${(k * 131) % 1280} ${470 + (k * 53) % 240} l10 -4" stroke="#c9a66b" stroke-width="3"/>`;
+        s += `<path d="M120 380 H520 M150 380 V440 M490 380 V440" stroke="#8b5e34" stroke-width="12" stroke-linecap="round"/>`;
+        s += `<g transform="translate(860 300)"><rect x="0" y="0" width="330" height="130" rx="8" fill="#a16207"/>${[0, 1, 2].map((i) => `<rect x="${12 + i * 106}" y="14" width="94" height="104" rx="8" fill="#3b2a12"/><ellipse cx="${59 + i * 106}" cy="104" rx="38" ry="12" fill="#e8cf9a"/>`).join('')}${egg(59, 96, 13)}${egg(271, 96, 13, '#f3d9b8')}</g>`;
+        s += hen(200, 338, .8, { sleep: night }) + hen(330, 338, .8, { c: '#c98a4b', sh: '#a66a2f', flip: true, sleep: night }) + hen(450, 338, .8, { sleep: night });
+        if (!night) s += hen(640, 520, 1, { c: '#c98a4b', sh: '#a66a2f' }) + hen(820, 560, .9, { flip: true }) + hen(1090, 540, 1, {});
+        if (o.feed) s += `<g transform="translate(600 430)"><path d="M-170 0 H170 L150 34 H-150 Z" fill="#9ca3af" stroke="#4b5563" stroke-width="4"/>${Array.from({ length: 30 }, (_, i) => `<circle cx="${-150 + i * 10}" cy="${4 + (i % 3) * 5}" r="5" fill="${['#f59e0b', '#fde68a', '#d97706'][i % 3]}"/>`).join('')}</g>`;
+        if (o.dirty) {
+          for (let k = 0; k < 26; k++) s += `<ellipse cx="${40 + (k * 149) % 1200}" cy="${480 + (k * 67) % 220}" rx="${20 + k % 4 * 6}" ry="9" fill="#5b4320"/>`;
+          for (let k = 0; k < 6; k++) s += `<path d="M${150 + k * 200} 430 q-14 -30 0 -56 q14 -26 0 -52" stroke="#84a33a" stroke-width="6" fill="none" opacity=".7" stroke-linecap="round"/>`;
+          for (let k = 0; k < 10; k++) s += `<g transform="translate(${100 + (k * 233) % 1100} ${230 + (k * 71) % 180})"><ellipse rx="6" ry="4" fill="#111827"/><ellipse cx="-4" cy="-5" rx="6" ry="3" fill="#e5e7eb" opacity=".8"/><ellipse cx="4" cy="-5" rx="6" ry="3" fill="#e5e7eb" opacity=".8"/></g>`;
+        }
+      }
+      if (night) s += `<rect width="${W}" height="${H}" fill="#fef08a" opacity=".07"/>`;
+      break;
+    }
+    case 'coopout': {
+      const heat = !!o.heat;
+      s += defsSky(id, heat ? '#ffb347' : '#a9d6f5', heat ? '#ffe8b0' : '#eef8ff');
+      s += heat ? sun(1080, 130, 86, '#ff7a1a') + sun(1080, 130, 60, '#ffd23f') : cloud(260, 110, 1) + cloud(900, 150, .8, '#fff', .9);
+      s += hills(360, heat ? '#b9c46a' : '#8fd06a', heat ? '#9aa84f' : '#6fb04a');
+      s += `<rect y="560" width="${W}" height="160" fill="${heat ? '#c9b27a' : '#9bbf6a'}"/>`;
+      s += `<polygon points="120,330 220,250 1060,250 1160,330" fill="#b45309"/><rect x="150" y="330" width="980" height="230" fill="#fdf3dc"/>`;
+      for (let i = 0; i < 5; i++) s += `<rect x="${190 + i * 190}" y="380" width="140" height="120" fill="#3b2a12"/>` + hen(260 + i * 190, 458, .5, { flip: i % 2 });
+      s += TX(640, 306, 'みのり養鶏場', 32, '#fff', 'middle');
+      if (o.net) {
+        s += `<g stroke="#15803d" stroke-width="2" opacity=".85">${Array.from({ length: 50 }, (_, i) => `<path d="M${150 + i * 20} 330 V560"/>`).join('')}${Array.from({ length: 12 }, (_, i) => `<path d="M150 ${330 + i * 20} H1130"/>`).join('')}</g>`;
+        [[240, 150], [420, 100], [760, 130], [980, 190], [600, 190]].forEach(([x, y]) => { s += `<path d="M${x - 26} ${y} q13 -16 26 0 q13 -16 26 0" stroke="#1f2937" stroke-width="5" fill="none" stroke-linecap="round"/>`; });
+        s += `<g transform="translate(1180 520)"><rect x="-60" y="0" width="120" height="34" rx="6" fill="#38bdf8" stroke="#0369a1" stroke-width="4"/>${TX(0, -10, '消毒', 22, '#0369a1', 'middle')}</g>`;
+      }
+      if (heat) {
+        s += `<g transform="translate(110 300)"><rect x="-22" y="-150" width="44" height="190" rx="22" fill="#fff" stroke="#6b7280" stroke-width="5"/><rect x="-8" y="-120" width="16" height="140" fill="#ef4444"/><circle cx="0" cy="40" r="30" fill="#ef4444" stroke="#6b7280" stroke-width="5"/>${TX(46, -90, '36℃', 34, '#b91c1c')}</g>`;
+        for (let k = 0; k < 7; k++) s += `<path d="M${200 + k * 150} 240 q-16 -24 0 -46 q16 -22 0 -44" stroke="#fff" stroke-width="6" fill="none" opacity=".7" stroke-linecap="round"/>`;
+      }
+      break;
+    }
+    case 'eggs': {
+      s += defsSky(id, '#e8f1f7', '#f8fbfd');
+      s += `<rect y="470" width="${W}" height="250" fill="#cbd5e1"/>`;
+      s += `<rect x="60" y="330" width="1160" height="26" rx="8" fill="#475569"/><rect x="60" y="356" width="1160" height="120" fill="#94a3b8"/>`;
+      for (let k = 0; k < 22; k++) s += egg(96 + k * 52, 310, 20, k % 5 === 2 ? '#f3d9b8' : '#fff7ed');
+      s += `<g transform="translate(640 150)"><rect x="-150" y="-70" width="300" height="150" rx="14" fill="#111827"/><circle cx="0" cy="0" r="74" fill="#fde68a" opacity=".35"/><ellipse cx="0" cy="4" rx="40" ry="52" fill="#fdba74" stroke="#fb923c" stroke-width="3"/><circle cx="2" cy="10" r="20" fill="#f97316" opacity=".55"/><path d="M-20 -30 l10 12 l-8 10 l12 12" stroke="#7c2d12" stroke-width="3" fill="none"/></g>` + TX(640, 262, '検卵（けんらん）', 26, '#1f2937', 'middle');
+      [[150, 150], [990, 150]].forEach(([x, y]) => { s += `<rect x="${x}" y="${y}" width="150" height="100" rx="8" fill="#e7d3a8" stroke="#a8884a" stroke-width="4"/>`; for (let a = 0; a < 2; a++) for (let b = 0; b < 4; b++) s += egg(x + 24 + b * 34, y + 30 + a * 40, 14); });
+      break;
+    }
+    case 'eggshop': {
+      s += shopBase(id, 'みのりの里のたまご', [[250, 'お買い得'], [560, '特選たまご'], [860, 'プリン・マヨネーズ']]);
+      [0, 1, 2, 3].forEach((i) => {
+        const x = 190 + i * 235;
+        s += `<rect x="${x}" y="376" width="190" height="60" rx="8" fill="${i === 2 ? '#c9a66b' : '#e7d3a8'}" stroke="#a8884a" stroke-width="4"/>`;
+        for (let b = 0; b < 5; b++) s += egg(x + 28 + b * 34, 392, 15, (i + b) % 3 ? '#fff7ed' : '#f3d9b8');
+      });
+      break;
+    }
+    case 'failcoop': {
+      s += coopWalls(id, false);
+      s += `<rect y="440" width="${W}" height="280" fill="#8a7a55"/>`;
+      for (let k = 0; k < 30; k++) s += `<ellipse cx="${40 + (k * 149) % 1200}" cy="${470 + (k * 67) % 230}" rx="${22 + k % 4 * 6}" ry="9" fill="#4e3a1c"/>`;
+      [[200, 520], [470, 580], [760, 530], [1040, 590]].forEach(([x, y], i) => { s += `<g transform="rotate(${i % 2 ? -8 : 8} ${x} ${y})">${hen(x, y, .95, { c: '#d9d5cc', sh: '#b5afa3', sleep: true, flip: i % 2 })}</g>`; });
+      s += `<g transform="translate(860 300)"><rect width="330" height="130" rx="8" fill="#7a5a1e"/>${[0, 1, 2].map((i) => `<rect x="${12 + i * 106}" y="14" width="94" height="104" rx="8" fill="#2a1f0e"/>`).join('')}</g>`;
+      for (let k = 0; k < 6; k++) s += `<path d="M${150 + k * 200} 430 q-14 -30 0 -56 q14 -26 0 -52" stroke="#84a33a" stroke-width="6" fill="none" opacity=".7" stroke-linecap="round"/>`;
+      s += `<rect width="${W}" height="${H}" fill="#1f2937" opacity=".3"/>`;
+      break;
+    }
+    default: return '';
+  }
+  return s;
+}
+
+/* ---- 資料図 ---- */
+const SV = (w, h, label, bg, inner) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}"><rect width="${w}" height="${h}" fill="${bg}"/>${inner}</svg>`;
+const LN = (x1, y1, x2, y2, c = '#1f2937') => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c}" stroke-width="2.5"/><circle cx="${x2}" cy="${y2}" r="4" fill="${c}"/>`;
+Object.assign(FIG, {
+  ikesu() {
+    let s = `<rect width="620" height="120" fill="#cfeaff"/><rect y="120" width="620" height="310" fill="#2f86b8"/><rect y="390" width="620" height="40" fill="#c9b27a"/>`;
+    s += `<path d="M150 120 V330 Q310 370 470 330 V120" fill="#1b5f8f" opacity=".5" stroke="#e5e7eb" stroke-width="3"/>`;
+    s += `<g stroke="#e5e7eb" stroke-width="1.5" opacity=".6">${Array.from({ length: 9 }, (_, i) => `<path d="M${150 + (i + 1) * 32} 120 V${336 + Math.sin((i + 1) / 10 * Math.PI) * 26}"/>`).join('')}${[170, 220, 270, 320].map((y) => `<path d="M150 ${y} H470"/>`).join('')}</g>`;
+    s += `<rect x="130" y="110" width="360" height="14" rx="6" fill="#f59e0b"/>` + [140, 230, 310, 390, 480].map((x) => `<circle cx="${x}" cy="116" r="15" fill="#fb923c" stroke="#c2410c" stroke-width="2.5"/>`).join('');
+    s += `<path d="M150 96 H470" stroke="#111827" stroke-width="10"/><path d="M150 96 V112 M470 96 V112" stroke="#111827" stroke-width="4"/>`;
+    s += madai(250, 210, .5) + madai(370, 250, .5, { flip: true }) + madai(300, 300, .45) + madai(400, 180, .4);
+    s += `<path d="M150 330 L90 392 M470 330 L530 392" stroke="#e5e7eb" stroke-width="3"/><rect x="72" y="386" width="36" height="20" rx="4" fill="#4b5563"/><rect x="512" y="386" width="36" height="20" rx="4" fill="#4b5563"/>`;
+    s += `<path d="M20 200 H110 m-16 -10 l16 10 l-16 10 M20 270 H110 m-16 -10 l16 10 l-16 10 M510 235 H600 m-16 -10 l16 10 l-16 10" stroke="#bae6fd" stroke-width="5" fill="none"/>`;
+    s += TX(20, 180, '潮の流れ', 18, '#fff') + TX(490, 60, '日よけの幕', 20) + LN(486, 66, 430, 94) + TX(20, 60, 'うき', 20) + LN(60, 64, 136, 108);
+    s += TX(500, 320, '網', 20, '#fff') + LN(496, 314, 470, 290, '#fff') + TX(14, 420, 'おもり', 18, '#1f2937') + TX(250, 420, '海の底', 18, '#1f2937');
+    return SV(620, 430, 'いけすの断面図', '#cfeaff', s);
+  },
+  hiyake() {
+    let s = `<rect x="14" y="56" width="240" height="220" rx="12" fill="#bfe3f7"/><rect x="266" y="56" width="240" height="220" rx="12" fill="#bfe3f7"/>`;
+    s += madai(134, 170, 1.15) + madai(386, 170, 1.15, { body: '#7a4a52', back: '#4a2c33', belly: '#b98f96', fin: '#5e3840' });
+    s += `<path d="M266 70 H506" stroke="#fde047" stroke-width="6"/>` + [300, 350, 400, 450].map((x) => `<path d="M${x} 70 l-12 40" stroke="#fde047" stroke-width="4" opacity=".8"/>`).join('') + `<path d="M14 70 H254" stroke="#111827" stroke-width="12"/>`;
+    s += TX(134, 40, '日よけあり', 22, '#14532d', 'middle') + TX(386, 40, '日よけなし', 22, '#7c2d12', 'middle') + TX(134, 306, '赤くてきれい', 19, '#be123c', 'middle', 700) + TX(386, 306, '日焼けで黒っぽい', 19, '#4a2c33', 'middle', 700);
+    return SV(520, 330, '日焼けしたマダイの図', '#f8fafc', s);
+  },
+  suion() {
+    let s = TX(260, 36, '水温と、えさを食べる量', 23, '#1f2937', 'middle');
+    s += `<path d="M60 270 H490 M60 270 V60" stroke="#1f2937" stroke-width="3" fill="none"/>` + TX(275, 318, '水温', 18, '#1f2937', 'middle') + TX(24, 70, '食', 17) + TX(24, 92, 'べ', 17) + TX(24, 114, 'る', 17) + TX(24, 136, '量', 17);
+    s += `<path d="M70 262 C150 255 190 120 290 96 S410 150 480 250" stroke="#e11d48" stroke-width="7" fill="none"/>`;
+    s += TX(100, 296, '低い（冬）', 17, '#1d4ed8', 'middle', 700) + TX(290, 296, 'ちょうどよい', 17, '#15803d', 'middle', 700) + TX(450, 296, '高すぎ', 17, '#b91c1c', 'middle', 700);
+    s += madai(290, 150, .5) + TX(100, 230, '食べない', 16, '#1d4ed8', 'middle', 700) + TX(300, 76, 'よく食べて育つ', 17, '#be123c', 'middle');
+    return SV(520, 330, '水温と食べる量のグラフ', '#f8fafc', s);
+  },
+  sanso() {
+    let s = `<rect x="14" y="56" width="240" height="230" rx="12" fill="#4fc3f7"/><rect x="266" y="56" width="240" height="230" rx="12" fill="#5f8f86"/>`;
+    for (let k = 0; k < 16; k++) s += `<circle cx="${34 + (k * 57) % 200}" cy="${80 + (k * 43) % 190}" r="8" fill="none" stroke="#fff" stroke-width="2.5"/>`;
+    for (let k = 0; k < 3; k++) s += `<circle cx="${300 + k * 80}" cy="${100 + k * 60}" r="8" fill="none" stroke="#fff" stroke-width="2.5" opacity=".7"/>`;
+    s += madai(120, 150, .5) + madai(170, 230, .45, { flip: true });
+    for (let k = 0; k < 8; k++) s += madai(300 + (k * 67) % 180, 110 + (k * 41) % 150, .36, { flip: k % 2, body: '#d6a5ad', back: '#b98591', rot: -18 });
+    s += TX(134, 40, '酸素がたっぷり', 21, '#0c4a6e', 'middle') + TX(386, 40, '酸素が足りない', 21, '#7c2d12', 'middle') + TX(134, 312, '元気に泳ぐ', 18, '#0c4a6e', 'middle', 700) + TX(386, 312, '水面で口をパクパク', 18, '#7c2d12', 'middle', 700);
+    return SV(520, 330, '水中の酸素の図', '#f8fafc', s);
+  },
+  namaesa() {
+    let s = TX(260, 36, '生えさ（絵）', 22, '#1f2937', 'middle');
+    for (let k = 0; k < 6; k++) { const x = 100 + (k % 3) * 160, y = 110 + Math.floor(k / 3) * 110; s += `<g transform="translate(${x} ${y}) rotate(${k * 13 - 20})"><path d="M-62 0 Q0 -30 62 0 Q0 30 -62 0 Z" fill="#cbd5e1" stroke="#64748b" stroke-width="3"/><path d="M-56 -4 Q0 -24 56 -4" stroke="#1e3a8a" stroke-width="5" fill="none"/><path d="M62 0 l26 -16 v32 Z" fill="#94a3b8"/><circle cx="-42" cy="-4" r="5" fill="#111827"/></g>`; }
+    s += TX(260, 312, 'イワシなどの小魚', 19, '#1f2937', 'middle', 700);
+    return SV(520, 330, '生えさの絵', '#e0f2fe', s);
+  },
+  pellet() {
+    let s = TX(260, 36, '固形の配合飼料（絵）', 22, '#1f2937', 'middle');
+    for (let i = 0; i < 70; i++) { const x = 60 + (i * 137) % 400, y = 70 + (i * 89) % 210; s += `<circle cx="${x}" cy="${y}" r="${12 + i % 3 * 2}" fill="${['#8b5a2b', '#a0672f', '#74481f'][i % 3]}" stroke="#4a2f14" stroke-width="2"/><circle cx="${x - 4}" cy="${y - 4}" r="3" fill="#c79a66" opacity=".8"/>`; }
+    s += TX(260, 312, '魚粉・小麦粉・油などを固めたもの', 18, '#1f2937', 'middle', 700);
+    return SV(520, 330, 'ペレットの絵', '#f6efe3', s);
+  },
+  iro() {
+    let s = TX(260, 36, '赤い色は、えさから', 23, '#1f2937', 'middle');
+    s += `<g transform="translate(110 170)"><path d="M-60 0 Q-20 -50 40 -20 Q64 0 40 20 Q-20 50 -60 0 Z" fill="#fb7185" stroke="#be123c" stroke-width="3"/><path d="M-30 -30 v60 M-6 -36 v72 M18 -28 v56" stroke="#be123c" stroke-width="3"/><path d="M40 -20 q40 -40 60 -30 M40 -10 q44 -20 64 -4" stroke="#be123c" stroke-width="3" fill="none"/><path d="M-60 0 l-28 -18 v36 Z" fill="#fb7185" stroke="#be123c" stroke-width="3"/><circle cx="34" cy="-6" r="4" fill="#111827"/></g>`;
+    s += `<path d="M210 170 H290 m-18 -12 l18 12 l-18 12" stroke="#be123c" stroke-width="7" fill="none"/>` + madai(400, 170, 1.1);
+    s += TX(110, 262, 'エビ・カニ', 20, '#be123c', 'middle') + TX(110, 288, 'の赤い色素', 18, '#be123c', 'middle', 700) + TX(400, 262, 'マダイの体の色に', 20, '#be123c', 'middle');
+    return SV(520, 330, 'マダイの色のもとの図', '#fff7ed', s);
+  },
+  akashio() {
+    let s = `<rect width="620" height="110" fill="#e6f4ff"/><rect y="110" width="620" height="320" fill="#2f86b8"/>`;
+    s += `<path d="M190 110 H620 V250 Q500 290 380 240 T190 200 Z" fill="#c2552f" opacity=".85"/>`;
+    for (let k = 0; k < 40; k++) s += `<circle cx="${210 + (k * 97) % 400}" cy="${124 + (k * 41) % 110}" r="${3 + k % 3}" fill="#fca5a5"/>`;
+    s += `<g transform="translate(60 70)"><rect x="-40" y="-30" width="80" height="50" fill="#e5e7eb" stroke="#6b7280" stroke-width="3"/><polygon points="-48,-30 0,-60 48,-30" fill="#b45309"/></g><path d="M100 96 q30 20 40 60" stroke="#7c5a3a" stroke-width="6" fill="none"/><path d="M132 150 l10 8 l4 -14" stroke="#7c5a3a" stroke-width="5" fill="none"/>`;
+    s += `<rect x="360" y="100" width="150" height="14" rx="6" fill="#f59e0b"/><path d="M366 114 V200 Q435 220 504 200 V114" fill="none" stroke="#e5e7eb" stroke-width="3"/>`;
+    for (let k = 0; k < 9; k++) s += `<circle cx="${380 + k * 14}" cy="${226 + (k % 3) * 16}" r="5" fill="#8b5a2b"/>`;
+    s += `<path d="M435 250 V290 m-10 -12 l10 12 l10 -12" stroke="#fde68a" stroke-width="5" fill="none"/>`;
+    s += madai(250, 330, .6, { rot: 170, body: '#e9e2e0', back: '#cfc7c5', fin: '#d6cfcd', dots: false }) + madai(470, 350, .55, { rot: 190, body: '#e9e2e0', back: '#cfc7c5', fin: '#d6cfcd', dots: false, flip: true });
+    s += TX(14, 150, '① 生活排水', 18, '#fff') + TX(300, 310, '② 食べ残し・ふん', 18, '#fde68a') + TX(226, 88, '③ 栄養分が増え、プランクトンが大発生', 19, '#7f1d1d') + TX(120, 410, '④ えらが傷つき、酸素も足りなくなる', 19, '#fff');
+    return SV(620, 430, '赤潮のしくみの図', '#e6f4ff', s);
+  },
+
+  kaikata() {
+    const col = (x, t, sub, c) => `<rect x="${x}" y="50" width="192" height="300" rx="12" fill="${c}"/>` + TX(x + 96, 40, t, 23, '#1f2937', 'middle') + TX(x + 96, 384, sub[0], 17, '#1f2937', 'middle', 700) + TX(x + 96, 408, sub[1], 17, '#1f2937', 'middle', 700);
+    let s = col(10, 'ケージ飼い', ['たくさん飼える', '鶏は動けない'], '#e5e7eb') + col(214, '平飼い', ['床を自由に歩ける', '止まり木・巣箱'], '#f3e2bd') + col(418, '放し飼い', ['外にも出られる', '広い土地が必要'], '#cfe8b4');
+    for (let r = 0; r < 3; r++) { const y = 70 + r * 92; for (let k = 0; k < 4; k++) s += hen(40 + k * 44, y + 44, .3, { flip: k % 2 }); s += `<g stroke="#4b5563" stroke-width="2.5">${Array.from({ length: 13 }, (_, i) => `<path d="M${22 + i * 14} ${y} v74"/>`).join('')}<path d="M22 ${y} h168 M22 ${y + 74} h168" stroke-width="4"/></g>`; }
+    s += `<path d="M236 190 H390 M250 190 V250 M376 190 V250" stroke="#8b5e34" stroke-width="7" stroke-linecap="round"/>` + hen(280, 166, .36) + hen(346, 166, .36, { flip: true, c: '#c98a4b', sh: '#a66a2f' }) + hen(270, 300, .46, { c: '#c98a4b', sh: '#a66a2f' }) + hen(360, 310, .46, { flip: true });
+    s += `<rect x="320" y="70" width="74" height="54" rx="6" fill="#3b2a12"/>` + egg(357, 108, 9);
+    s += `<circle cx="570" cy="90" r="22" fill="#fde047"/><path d="M418 290 Q514 250 610 290 V350 H418 Z" fill="#8fd06a"/>` + hen(470, 270, .46) + hen(560, 290, .46, { flip: true, c: '#c98a4b', sh: '#a66a2f' }) + `<path d="M430 150 q14 -40 30 0 q10 -50 26 0" fill="#3f9b3a"/>`;
+    return SV(620, 430, '鶏の飼い方3種類の図', '#f8fafc', s);
+  },
+  aw() {
+    let s = TX(260, 36, '快適にくらすために', 23, '#1f2937', 'middle');
+    const it = (x, y, t, c) => `<rect x="${x}" y="${y}" width="230" height="52" rx="12" fill="${c}"/>` + TX(x + 115, y + 34, t, 19, '#fff', 'middle');
+    s += it(20, 56, 'えさと水がある', '#b45309') + it(270, 56, '快適な場所でくらす', '#1d4ed8') + it(20, 120, '痛み・病気がない', '#be123c') + it(270, 120, 'こわい思いをしない', '#6d28d9') + it(145, 184, '自然な行動ができる', '#15803d');
+    s += hen(120, 286, .6) + hen(400, 286, .6, { flip: true, c: '#c98a4b', sh: '#a66a2f' }) + TX(260, 296, '砂あび・止まり木', 17, '#14532d', 'middle', 700);
+    return SV(520, 330, 'アニマルウェルフェアの図', '#f3faec', s);
+  },
+  kimi() {
+    const one = (x, c, t, f) => `<ellipse cx="${x}" cy="230" rx="88" ry="60" fill="#fffdf5" stroke="#e7c9a0" stroke-width="3"/><circle cx="${x}" cy="226" r="40" fill="${c}"/><circle cx="${x - 12}" cy="214" r="9" fill="#fff" opacity=".6"/>` + TX(x, 330, t, 21, '#1f2937', 'middle') + `<rect x="${x - 80}" y="60" width="160" height="70" rx="12" fill="#fff" stroke="#c9a66b" stroke-width="3"/>` + TX(x, 104, f, 20, '#7c2d12', 'middle') + `<path d="M${x} 134 V160 m-10 -12 l10 12 l10 -12" stroke="#7c2d12" stroke-width="5" fill="none"/>`;
+    let s = TX(310, 36, 'えさで変わる、黄身の色', 24, '#1f2937', 'middle') + one(110, '#f5e9a8', '白っぽい黄色', '米が多い') + one(310, '#fbbf24', '黄色', 'トウモロコシ') + one(510, '#f97316', 'オレンジ色', 'パプリカなど');
+    s += TX(310, 400, '色がちがっても、栄養はほとんど同じ', 19, '#1f2937', 'middle', 700);
+    return SV(620, 430, 'えさと黄身の色の図', '#fff7ed', s);
+  },
+  kara() {
+    let s = TX(260, 36, '殻の色は、鶏の種類で決まる', 22, '#1f2937', 'middle');
+    s += hen(120, 130, .8) + hen(390, 130, .8, { c: '#c98a4b', sh: '#a66a2f' });
+    s += `<path d="M120 190 V220 m-10 -12 l10 12 l10 -12 M390 190 V220 m-10 -12 l10 12 l10 -12" stroke="#1f2937" stroke-width="5" fill="none"/>`;
+    s += egg(120, 264, 36, '#ffffff', '#cbd5e1') + egg(390, 264, 36, '#e2b17a', '#b07a3e') + TX(210, 274, '白い卵', 20, '#1f2937') + TX(440, 274, '茶色', 20, '#7c2d12');
+    return SV(520, 330, '殻の色の図', '#f8fafc', s);
+  },
+  bouchou() {
+    let s = `<rect width="620" height="300" fill="#dff1ff"/><rect y="300" width="620" height="130" fill="#b9d58a"/>`;
+    s += `<polygon points="230,170 290,120 560,120 610,170" fill="#b45309"/><rect x="250" y="170" width="340" height="150" fill="#fdf3dc"/><rect x="290" y="200" width="230" height="90" fill="#3b2a12"/>` + hen(350, 264, .44) + hen(450, 264, .44, { flip: true });
+    s += `<g stroke="#15803d" stroke-width="2">${Array.from({ length: 18 }, (_, i) => `<path d="M${250 + i * 20} 170 V320"/>`).join('')}${Array.from({ length: 8 }, (_, i) => `<path d="M250 ${170 + i * 20} H590"/>`).join('')}</g>`;
+    [[70, 80], [150, 130]].forEach(([x, y]) => { s += `<path d="M${x - 26} ${y} q13 -16 26 0 q13 -16 26 0" stroke="#1f2937" stroke-width="5" fill="none"/>`; });
+    s += `<path d="M110 150 L220 210" stroke="#b91c1c" stroke-width="5" stroke-dasharray="8 6"/><path d="M196 176 l44 44 M240 176 l-44 44" stroke="#b91c1c" stroke-width="8"/>`;
+    s += `<g transform="translate(60 330)"><ellipse rx="26" ry="12" fill="#6b7280"/><circle cx="24" cy="-4" r="8" fill="#6b7280"/><path d="M-26 0 q-20 6 -30 -6" stroke="#6b7280" stroke-width="3" fill="none"/></g>`;
+    s += `<rect x="150" y="350" width="90" height="26" rx="6" fill="#38bdf8" stroke="#0369a1" stroke-width="3"/><path d="M186 344 q-4 -18 8 -22 q10 0 8 22" fill="#111827"/>`;
+    s += TX(20, 50, '野鳥', 20) + TX(430, 100, '防鳥ネット', 20, '#14532d') + TX(20, 384, 'ねずみ', 18) + TX(150, 404, '消毒そう（くつ）', 18, '#0369a1') + TX(330, 384, 'ウイルスを「持ちこまない」', 20, '#b91c1c');
+    return SV(620, 430, '防鳥ネットと消毒の図', '#dff1ff', s);
+  },
+  hikari() {
+    let s = TX(310, 38, '1日の明るい時間と、卵の数', 24, '#1f2937', 'middle');
+    const bar = (y, lit, t, n, c) => { let r = `<rect x="150" y="${y}" width="360" height="46" rx="8" fill="#1e293b"/><rect x="150" y="${y}" width="${lit * 15}" height="46" rx="8" fill="#fde047"/>` + TX(140, y + 32, t, 20, '#1f2937', 'end') + TX(150 + lit * 7.5, y + 32, lit + '時間', 20, '#7c2d12', 'middle'); for (let k = 0; k < n; k++) r += egg(530 + (k % 3) * 28, y + 12 + Math.floor(k / 3) * 26, 11); return r; };
+    s += bar(80, 10, '冬の自然', 2) + bar(160, 14, '夏の自然', 5) + bar(240, 15, '点灯管理', 6);
+    s += `<circle cx="80" cy="340" r="22" fill="#fde047"/>` + [0, 60, 120, 180, 240, 300].map((a) => `<path d="M${80 + 30 * Math.cos(a * Math.PI / 180)} ${340 + 30 * Math.sin(a * Math.PI / 180)} l${10 * Math.cos(a * Math.PI / 180)} ${10 * Math.sin(a * Math.PI / 180)}" stroke="#f59e0b" stroke-width="4"/>`).join('');
+    s += TX(124, 336, '明るい時間が長い', 20, '#7c2d12') + TX(124, 364, '→ 卵をよく産む', 20, '#7c2d12') + TX(360, 336, '夜は暗くして', 20, '#1e3a8a') + TX(360, 364, '→ 鶏を休ませる', 20, '#1e3a8a');
+    s += TX(310, 414, '照明で明るい時間を調整する ＝ 点灯管理', 19, '#1f2937', 'middle');
+    return SV(620, 430, '点灯管理の図', '#f8fafc', s);
+  },
+  junkan() {
+    let s = TX(310, 38, '地域の中で、資源がまわる', 24, '#1f2937', 'middle');
+    const node = (x, y, t, c) => `<circle cx="${x}" cy="${y}" r="62" fill="${c}"/>` + TX(x, y + 92, t, 20, '#1f2937', 'middle');
+    s += node(310, 130, '', '#fde68a') + node(130, 310, '', '#d9c7a3') + node(490, 310, '', '#cfe8b4');
+    s += hen(306, 130, .6) + TX(310, 60, '', 1);
+    s += `<path d="M90 340 Q130 250 170 340 Z" fill="#4a3421"/><path d="M120 280 q6 -14 0 -26 M140 276 q6 -14 0 -26" stroke="#9ca3af" stroke-width="3" fill="none"/>`;
+    s += `<path d="M460 350 V300 M490 350 V290 M520 350 V300" stroke="#3f9b3a" stroke-width="6"/><ellipse cx="460" cy="296" rx="8" ry="16" fill="#facc15"/><ellipse cx="490" cy="286" rx="8" ry="16" fill="#facc15"/><ellipse cx="520" cy="296" rx="8" ry="16" fill="#facc15"/>`;
+    const arr = (d, hx, hy, r) => `<path d="${d}" stroke="#15803d" stroke-width="7" fill="none"/><g transform="translate(${hx} ${hy}) rotate(${r})"><path d="M-12 -10 L8 0 L-12 10 Z" fill="#15803d"/></g>`;
+    s += arr('M250 170 Q190 200 160 248', 160, 250, 115) + arr('M196 320 H420', 424, 320, 0) + arr('M470 250 Q440 200 372 168', 370, 167, 205);
+    s += TX(310, 218, '鶏', 20, '#7c2d12', 'middle') + TX(130, 402, '鶏ふん堆肥', 20, '#1f2937', 'middle') + TX(490, 402, '米・野菜', 20, '#1f2937', 'middle');
+    s += TX(150, 190, 'ふん', 19, '#15803d', 'middle') + TX(310, 308, '肥料', 19, '#15803d', 'middle') + TX(476, 190, 'えさ', 19, '#15803d', 'middle');
+    return SV(620, 430, '資源の循環の図', '#f3faec', s);
+  },
+  kenran() {
+    let s = `<rect width="620" height="430" fill="#111827"/>` + TX(310, 40, '検卵：光を当てて、中を見る', 24, '#fff', 'middle');
+    const one = (x, t, extra, ok) => `<circle cx="${x}" cy="200" r="96" fill="#fde68a" opacity=".22"/><ellipse cx="${x}" cy="200" rx="64" ry="84" fill="#fdba74" stroke="#fb923c" stroke-width="3"/><circle cx="${x + 2}" cy="214" r="30" fill="#f97316" opacity=".5"/>${extra}` + TX(x, 330, t, 21, '#fff', 'middle') + `<circle cx="${x}" cy="372" r="24" fill="${ok ? '#16a34a' : '#dc2626'}"/>` + TX(x, 382, ok ? '○' : '×', 28, '#fff', 'middle');
+    s += one(120, '正常', '', true) + one(310, '殻にひび', `<path d="M290 140 l16 22 l-14 18 l20 20 l-10 22" stroke="#7c2d12" stroke-width="4" fill="none"/>`, false) + one(500, '中に異物', `<circle cx="520" cy="190" r="9" fill="#7f1d1d"/>`, false);
+    return SV(620, 430, '検卵の図', '#111827', s);
+  }
+});
+
+/* ===== ゲーム本体 ===== */
+(function () {
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const stageEl = $('#stage'), bgEl = $('#bg'), charsEl = $('#chars'), hudEl = $('#hud'), dlgEl = $('#dlg'), uiEl = $('#ui'), fxEl = $('#fx');
+const ORDER = ['boss', 'craft', 'sci'];
+
+function fit() {
+  const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+  stageEl.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+}
+window.addEventListener('resize', fit); fit();
+
+/* ---------- 状態 ---------- */
+let G = null;
+function newGame() { return { name: '', cls: '1', num: '1', hist: [], S: null, t0: Date.now(), hard: '', reason: '', trade: '', self: '' }; }
+const N = () => (G && G.name ? G.name : 'あなた');
+
+/* ---------- 文字をすこしずつ出す ---------- */
+let typer = null;
+function stopType() { if (typer) { clearInterval(typer.timer); } typer = null; }
+function typeInto(el, text, cb) {
+  stopType();
+  const chars = Array.from(text); let i = 0;
+  el.textContent = '';
+  const t = { el, text, cb, done: false, timer: null };
+  t.timer = setInterval(() => { i++; el.textContent = chars.slice(0, i).join(''); if (i >= chars.length) finishType(); }, 28);
+  typer = t;
+}
+function finishType() {
+  const t = typer; if (!t || t.done) return;
+  clearInterval(t.timer); t.el.textContent = t.text; t.done = true;
+  if (t.cb) t.cb();
+}
+
+/* ---------- 背景 ---------- */
+let bgKey = '';
+function setBG(kind, o) {
+  o = o || {};
+  const key = kind + JSON.stringify(o); if (key === bgKey) return; bgKey = key;
+  const layer = document.createElement('div'); layer.className = 'layer'; layer.style.opacity = 0;
+  layer.innerHTML = bgSVG(kind, o); bgEl.appendChild(layer);
+  requestAnimationFrame(() => requestAnimationFrame(() => { layer.style.opacity = 1; }));
+  setTimeout(() => { while (bgEl.children.length > 1) bgEl.removeChild(bgEl.firstChild); }, 800);
+}
+
+/* ---------- 人物 ---------- */
+const POS = { boss: 30, craft: 450, sci: 870 };
+const slots = {}, moodCache = {};
+function buildChars() {
+  charsEl.innerHTML = '';
+  ORDER.forEach((w) => {
+    const s = document.createElement('div'); s.className = 'slot hidden'; s.style.left = POS[w] + 'px'; s.style.setProperty('--c', WHO[w].color);
+    s.innerHTML = '<div class="bubble"></div><div class="fig"></div><div class="nt" style="background:' + WHO[w].color + '">' + WHO[w].full + '<small>' + WHO[w].tag + '</small></div>';
+    charsEl.appendChild(s); slots[w] = s; setMood(w, 'normal');
+  });
+}
+function setMood(w, m) { if (moodCache[w] === m && slots[w].querySelector('.fig').firstChild) return; moodCache[w] = m; slots[w].querySelector('.fig').innerHTML = charSVG(w, m); }
+function showChars(list) { ORDER.forEach((w) => slots[w].classList.toggle('hidden', list.indexOf(w) < 0)); }
+function dimChars(except) { ORDER.forEach((w) => slots[w].classList.toggle('dim', !!except && except.indexOf(w) < 0)); }
+function setBubble(w, text, show) { const b = slots[w].querySelector('.bubble'); if (text != null) b.textContent = text; b.classList.toggle('show', !!show); }
+function resetChars() { ORDER.forEach((w) => { setMood(w, 'normal'); setBubble(w, '', false); slots[w].classList.remove('dim'); }); }
+
+/* ---------- HUD ---------- */
+function showHud(label) {
+  hudEl.style.display = 'flex';
+  hudEl.innerHTML = '<div class="chip" id="chip">' + label + '</div><div class="meters">' +
+    METERS.map((m) => '<div class="m" data-k="' + m.k + '" title="' + m.help + '"><div class="lab"><span>' + m.label + '</span><b>0</b></div><div class="bar"><i style="background:' + m.color + ';width:0"></i></div></div>').join('') + '</div>';
+}
+function setChip(t) { const c = $('#chip'); if (c) c.textContent = t; }
+function setMeters(v, d) {
+  METERS.forEach((m) => {
+    const el = $('.m[data-k="' + m.k + '"]', hudEl); if (!el) return;
+    el.querySelector('b').textContent = v[m.k];
+    el.querySelector('i').style.width = v[m.k] + '%';
+    const x = d && d[m.k];
+    if (x) {
+      const good = m.k === 'c' ? x < 0 : x > 0;
+      const sp = document.createElement('span'); sp.className = 'delta ' + (good ? 'good' : 'bad');
+      sp.textContent = (x > 0 ? '▲+' + x : '▼' + x); el.appendChild(sp);
+      setTimeout(() => sp.remove(), 2100);
+    }
+  });
+}
+
+/* ---------- 会話窓 ---------- */
+let advance = null, ready = false;
+function showDlg(html) { dlgEl.style.display = 'block'; dlgEl.innerHTML = html; }
+function hideDlg() { dlgEl.style.display = 'none'; dlgEl.innerHTML = ''; advance = null; ready = false; stopType(); }
+function spkTag(spk) {
+  if (WHO[spk]) return '<span class="spk" style="background:' + WHO[spk].color + '">' + WHO[spk].full + '</span>';
+  if (spk === 'me') return '<span class="spk" style="background:#0f766e">' + esc(N()) + '</span>';
+  return '<span class="spk" style="background:#475569">ナレーション</span>';
+}
+function say(spk, text, next, opt) {
+  opt = opt || {};
+  showDlg(spkTag(spk) + '<div class="txt"></div><div class="nx" hidden>▼</div>' + (opt.btn ? '<button class="go" hidden>' + opt.btn + '</button>' : ''));
+  advance = null; ready = false;
+  const t = $('.txt', dlgEl), nx = $('.nx', dlgEl), go = $('.go', dlgEl);
+  if (go) go.onclick = () => { go.disabled = true; if (next) next(); };
+  typeInto(t, text, () => { ready = true; if (go) { go.hidden = false; go.focus(); } else { nx.hidden = false; advance = next; } });
+}
+dlgEl.addEventListener('click', (e) => {
+  if (e.target.closest('button,select,textarea,input')) return;
+  if (typer && !typer.done) { finishType(); return; }
+  if (ready && advance) { const f = advance; advance = null; ready = false; f(); }
+});
+window.addEventListener('keydown', (e) => {
+  if ((e.key === ' ' || e.key === 'Enter') && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); dlgEl.click(); }
+});
+function seq(lines, done) {
+  let i = 0;
+  const step = () => {
+    if (i >= lines.length) { if (done) done(); return; }
+    const L = lines[i++];
+    if (L.show) showChars(L.show);
+    if (L.hl !== undefined) dimChars(L.hl);
+    if (L.mood) Object.keys(L.mood).forEach((w) => setMood(w, L.mood[w]));
+    if (L.bg) setBG(L.bg.kind, L.bg);
+    say(L.spk, L.text, step);
+  };
+  step();
+}
+
+/* ---------- 画面 ---------- */
+function ui(html) { uiEl.style.display = 'block'; uiEl.innerHTML = html; }
+function clearUI() { uiEl.style.display = 'none'; uiEl.innerHTML = ''; }
+function clearAll() {
+  stopType(); hideDlg(); clearUI(); fxEl.innerHTML = '';
+  hudEl.style.display = 'none'; hudEl.innerHTML = '';
+  showChars([]); resetChars();
+}
+function confetti() {
+  const cols = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#fde047'];
+  for (let i = 0; i < 46; i++) {
+    const c = document.createElement('div'); c.className = 'confetti';
+    c.style.left = (Math.random() * 1280) + 'px'; c.style.background = cols[i % cols.length];
+    c.style.animationDuration = (2.6 + Math.random() * 2.4) + 's'; c.style.animationDelay = (Math.random() * 1.2) + 's';
+    fxEl.appendChild(c);
+  }
+}
+
+/* ---------- タイトル ---------- */
+function screenTitle() {
+  clearAll(); setBG('station', { mood: 'good' });
+  ui('<div class="screen"><div class="panel title-card"><span class="small">中学2年　技術　生物育成の技術</span><h1>道の駅の名物づくり</h1><div class="sub">〜 ' + TOPIC.sub + ' 〜</div>' +
+     '<p style="font-size:20px;margin:0 0 16px;line-height:1.6">3人のアドバイザーの意見をくらべて、<br>道の駅の新しい名物を育てよう。</p>' +
+     '<button class="big" id="go" style="font-size:28px;padding:12px 56px">はじめる ▶</button><div class="cr">' + CONFIG.CREDIT + '　｜　<a href="index.html" style="color:inherit">題材えらびにもどる</a></div></div></div>');
+  $('#go').onclick = screenSetup; $('#go').focus();
+}
+
+function screenSetup() {
+  if (!G) G = newGame();
+  setBG('station', { mood: 'normal' });
+  const opt = (arr, cur) => arr.map((v) => '<option value="' + v + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + v + '</option>').join('');
+  const nums = Array.from({ length: CONFIG.MAX_NUM }, (_, i) => i + 1);
+  ui('<div class="screen"><div class="panel form"><h2>プレイヤー登録</h2>' +
+     '<div class="row"><label for="cls">組</label><select id="cls">' + opt(CONFIG.CLASSES, G.cls) + '</select><label for="num" style="width:auto;margin-left:18px">番号</label><select id="num">' + opt(nums, G.num) + '</select></div>' +
+     '<div class="row"><label for="nm">主人公の名前</label><input id="nm" maxlength="8" style="width:300px" value="' + esc(G.name) + '" placeholder="例：ハルト（あだ名でもOK）"></div>' +
+     '<div class="err" id="err"></div><div style="text-align:right"><button class="big" id="ok">物語をはじめる ▶</button></div></div></div>');
+  $('#ok').onclick = () => {
+    const nm = $('#nm').value.trim();
+    if (!nm) { $('#err').textContent = '主人公の名前を入れてください。'; $('#nm').focus(); return; }
+    G.name = nm; G.cls = $('#cls').value; G.num = $('#num').value; G.t0 = Date.now();
+    prologue();
+  };
+  $('#nm').focus();
+  $('#nm').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#ok').click(); });
+}
+
+/* ---------- 導入 ---------- */
+function prologue() {
+  clearAll(); setBG('station', { mood: 'normal' });
+  seq(TOPIC.prologue(N()), stage1);
+}
+
+/* ---------- ステージ1 ---------- */
+function stage1() {
+  clearAll();
+  showHud('ステージ1　社長のいうとおり'); setMeters(START);
+  showChars(ORDER); dimChars(['boss']); setMood('boss', 'happy'); setMood('craft', 'worried'); setMood('sci', 'worried');
+  const v = { ...START };
+  let i = 0;
+  const beat = () => {
+    if (i >= STAGE1.length) return stage1Fail();
+    const b = STAGE1[i];
+    setBG(b.bg.kind, b.bg); setChip('ステージ1　社長のいうとおり（' + (i + 1) + '/3）');
+    say('boss', b.talk, () => {
+      const d = b.d;
+      ['y', 'q', 'c', 'e'].forEach((k) => { v[k] = clamp(v[k] + d[k]); });
+      setMeters(v, d);
+      say('narr', b.result, () => { i++; beat(); });
+    }, { btn: '社長の言うとおりにする ▶' });
+  };
+  beat();
+}
+function stage1Fail() {
+  hideDlg(); setBG(TOPIC.failBg || 'fail');
+  const to = STAGE1_FAIL.to;
+  setMeters(to);
+  setTimeout(() => {
+    ui('<div class="screen fail"><div style="font-size:20px;font-weight:700;background:#b91c1c;padding:4px 18px;border-radius:999px">' + TOPIC.failAfter + '</div><h2>' + STAGE1_FAIL.title + '</h2><p>' + STAGE1_FAIL.text + '</p>' +
+       '<div class="stampbox">一つの立場だけで決めると、失敗する。</div><button class="big" id="nx" style="margin-top:6px">つづける ▶</button></div>');
+    $('#nx').onclick = () => {
+      clearUI(); showChars(ORDER); dimChars(null);
+      seq(TOPIC.failTalk(N()), stage2Rules);
+    };
+    $('#nx').focus();
+  }, 1300);
+}
+
+/* ---------- ステージ2 ---------- */
+function stage2Rules() {
+  clearAll(); setBG('station', { mood: 'normal' });
+  ui('<div class="screen"><div class="panel rules"><h2>ステージ2　3人の意見をくらべよう</h2>' +
+     '<div class="rl"><div class="it"><b>① 3人が意見を言う</b>場面ごとに、社長・職人・研究者が、考えと理由を話します。</div>' +
+     '<div class="it"><b>② くらべて、ひとつ選ぶ</b>だれの意見が、どんな良さと問題をもつか考えよう。</div>' +
+     '<div class="it"><b>③ メーターが動く</b>選んだ結果で、4つのメーターが変わり、3人の表情も変わります。</div>' +
+     '<div class="it"><b>④ 全部で10場面</b>前の選択が、あとの場面に影響することもあります。（全体で約25〜30分）</div></div>' +
+     '<div class="rl" style="margin-top:10px">' + METERS.map((m) => '<div class="it"><b><span class="mdot" style="background:' + m.color + '"></span>' + m.label + '</b>' + m.help + '</div>').join('') + '</div>' +
+     '<div class="goal">めざすのは、どれか1つにかたよらない「バランスのよい名物づくり」。</div>' +
+     '<div style="text-align:right"><button class="big" id="go">場面1へ ▶</button></div></div></div>');
+  $('#go').onclick = startRun; $('#go').focus();
+}
+
+function startRun() {
+  G.S = newState(); G.attemptStart = Date.now();
+  clearAll(); showHud('ステージ2'); setMeters(START);
+  showChars(ORDER); resetChars();
+  runScene(0);
+}
+
+function runScene(i) {
+  const sc = SCENES[i];
+  hideDlg(); setBG(sc.bg.kind, sc.bg); setChip('ステージ2　場面 ' + (i + 1) + ' / 10　' + sc.title);
+  showChars(ORDER); resetChars(); dimChars(null);
+  say('narr', sc.intro, () => (sc.mat ? showMat(sc, () => talkPhase(i)) : talkPhase(i)));
+}
+
+/* ---------- 資料カード（写真があれば写真、なければ図） ---------- */
+function showMat(sc, done) {
+  const m = sc.mat;
+  const items = m.items.map((it, k) => {
+    const credit = it.photo && CONFIG.PHOTO_CREDITS[it.photo] ? CONFIG.PHOTO_CREDITS[it.photo] : '';
+    const pic = it.photo
+      ? '<img alt="" data-k="' + k + '" src="' + CONFIG.PHOTO_DIR + it.photo + '.jpg">'
+      : figSVG(it.fig);
+    return '<figure class="mat' + (it.wide ? ' wide' : '') + '" data-k="' + k + '"><div class="pic">' + pic + '</div><figcaption>' + it.cap + (credit ? '<small>' + esc(credit) + '</small>' : '') + '</figcaption></figure>';
+  }).join('');
+  const box = document.createElement('div'); box.className = 'screen matwrap';
+  box.innerHTML = '<div class="panel matpanel"><h2>' + m.title + '</h2><div class="mats">' + items + '</div><div style="text-align:right"><button class="big" id="matok">' + (done ? '3人の意見を聞く ▶' : 'とじる') + '</button></div></div>';
+  uiEl.style.display = 'block'; uiEl.innerHTML = ''; uiEl.appendChild(box);
+  box.querySelectorAll('img').forEach((img) => {
+    img.onerror = () => {
+      const it = m.items[+img.dataset.k], fg = img.closest('figure');
+      if (it.fig) img.parentNode.innerHTML = figSVG(it.fig); else fg.remove();
+    };
+  });
+  $('#matok').onclick = () => { clearUI(); if (done) done(); };
+  $('#matok').focus();
+}
+
+
+function talkPhase(i) {
+  const sc = SCENES[i];
+  ORDER.forEach((w, k) => setTimeout(() => setBubble(w, sc.talk[w], true), 250 + k * 600));
+  const keys = ORDER; // 人物の並び（社長・職人・研究者）と同じ順に固定
+  let sel = null;
+  showDlg('<div class="prompt"><b>3人の意見をくらべて、どうする？</b><span class="trade">トレードオフ：' + sc.trade + '</span>' +
+    (sc.mat ? '<button class="btn sub matbtn" id="matb">資料を見る</button>' : '') + '<button class="btn decide" id="dec" disabled>これに決める ▶</button></div><div class="cards">' +
+    keys.map((k) => { const c = sc.ch[k]; return '<button class="card" data-k="' + k + '" style="--c:' + WHO[k].color + ';--soft:' + WHO[k].soft + '"><span class="tg">' + WHO[k].name + '案</span><b>' + c.label + '</b><small>' + c.desc + '</small></button>'; }).join('') + '</div>');
+  dlgEl.querySelectorAll('.card').forEach((b) => {
+    b.onclick = () => {
+      sel = b.dataset.k;
+      dlgEl.querySelectorAll('.card').forEach((x) => x.classList.toggle('sel', x === b));
+      $('#dec').disabled = false;
+    };
+  });
+  if (sc.mat) $('#matb').onclick = () => showMat(sc, null);
+  $('#dec').onclick = () => { if (sel) resultPhase(i, sel); };
+}
+
+function concern(w, d) { return w === 'boss' ? d.y - d.c : (w === 'craft' ? d.q : d.e); }
+function reaction(sc, w, key, d, i) {
+  const v = concern(w, d), chosen = w === key;
+  if (v >= 4) return { mood: 'happy', text: sc.react[w].pos };
+  if (v <= -2) return chosen ? { mood: 'worried', text: CHOSEN_BAD[w][0] } : { mood: w === 'sci' ? 'worried' : 'angry', text: sc.react[w].neg };
+  if (chosen) return { mood: 'happy', text: CHOSEN_GOOD[w][0] };
+  return { mood: 'normal', text: NEUTRAL[w][i % 3] };
+}
+
+function resultPhase(i, key) {
+  const sc = SCENES[i];
+  const r = applyChoice(G.S, sc, key);
+  setMeters(G.S.v, r.d);
+  ORDER.forEach((w) => {
+    const rc = reaction(sc, w, key, r.d, i);
+    setMood(w, rc.mood); setBubble(w, '「' + rc.text + '」', true);
+    slots[w].classList.toggle('dim', false);
+  });
+  const last = i === SCENES.length - 1;
+  showDlg(spkTag('narr') + '<div class="txt" style="min-height:50px;font-size:22px"></div>' +
+    (r.note ? '<div class="note">' + r.note + '</div>' : '') +
+    '<div class="memo"><b>学習メモ</b>　' + sc.memo + '</div><button class="go" hidden>' + (last ? '結果を見る ▶' : 'つぎの場面へ ▶') + '</button>');
+  const go = $('.go', dlgEl);
+  go.onclick = () => { go.disabled = true; last ? showEnding() : runScene(i + 1); };
+  typeInto($('.txt', dlgEl), sc.ch[key].result, () => { go.hidden = false; go.focus(); });
+}
+
+/* ---------- エンディング ---------- */
+function saveAttempt() {
+  const J = judge(G.S.v);
+  const rec = { grade: J.grade, total: J.total, bias: J.bias, type: J.type, weak: J.weak, axes: J.axes, v: { ...G.S.v }, picks: G.S.picks.slice(), logs: G.S.logs.slice(), sec: Math.round((Date.now() - (G.attemptStart || G.t0)) / 1000) };
+  G.hist.push(rec); return rec;
+}
+function showEnding(preview) {
+  const rec = preview || saveAttempt(); const J = rec; const E = getEnding(J);
+  clearAll();
+  setBG('station', { mood: (J.grade === 'S' || J.grade === 'A') ? 'good' : (J.grade === 'D' || J.type === 'low' ? 'bad' : 'normal') });
+  const a = J.axes;
+  const voice = (k, label, val) => '<div class="voice"><i>' + label + '</i><span>「' + (val >= 60 ? VOICES[k].hi : VOICES[k].lo) + '」</span></div>';
+  ui('<div class="screen"><div class="panel end">' +
+     '<div class="end-top"><div class="stamp g-' + J.grade + '">' + J.grade + '</div><div><div class="kicker">道の駅での評価　（' + esc(N()) + 'の' + TOPIC.item + '／' + G.hist.length + '回目）</div><h2>' + E.title + '</h2><p>' + E.text(esc(N())) + '</p></div></div>' +
+     '<div class="end-mid"><div class="box"><h3>お客さんの声</h3>' + voice('econ', 'もうけ・量', a.econ) + voice('qual', '品質', a.qual) + voice('env', '環境', a.env) + '</div>' +
+     '<div class="box"><h3>かたよりチェック</h3>' + radarSVG(a) + '<div class="radnote">かたより ' + J.bias + '（小さいほど、バランスがよい）</div></div>' +
+     '<div class="box"><h3>4つのメーター</h3>' + METERS.map((m) => '<div class="emeter">' + m.label + '　' + J.v[m.k] + '<div class="bar"><i style="background:' + m.color + ';width:' + J.v[m.k] + '%"></i></div></div>').join('') + '</div></div>' +
+     '<div style="text-align:right"><button class="big" id="cm">3人のコメントを聞く ▶</button></div></div></div>');
+  if (J.grade === 'S' || J.grade === 'A') confetti();
+  $('#cm').onclick = () => endingComments(J, E);
+  $('#cm').focus();
+}
+function endingComments(J, E) {
+  clearUI(); fxEl.innerHTML = '';
+  const a = J.axes;
+  const mood = (v) => (v >= 60 ? 'happy' : (v < 45 ? 'angry' : 'normal'));
+  showChars(ORDER); dimChars(null);
+  seq([
+    { spk: 'boss', text: E.boss, hl: ['boss'], mood: { boss: mood(a.econ), craft: mood(a.qual), sci: mood(a.env) } },
+    { spk: 'craft', text: E.craft, hl: ['craft'] },
+    { spk: 'sci', text: E.sci, hl: ['sci'] },
+    { spk: 'narr', text: E.lesson, hl: ORDER }
+  ], endingChoices);
+}
+function endingChoices() {
+  showDlg(spkTag('narr') + '<div class="txt" style="min-height:70px">どうしますか？　もう一度ちがう選び方を試すこともできます。</div>' +
+    '<div style="position:absolute;left:28px;right:28px;bottom:16px;display:flex;gap:16px"><button class="btn green" id="rf" style="flex:1">ふりかえりを書いて、記録を送る ▶</button><button class="btn sub" id="rt" style="flex:1">ステージ2からやりなおす</button></div>');
+  $('#rf').onclick = screenReflect; $('#rt').onclick = () => { stage2Retry(); };
+  $('#rf').focus();
+}
+function stage2Retry() {
+  clearAll(); setBG('station', { mood: 'normal' });
+  showChars(ORDER);
+  say('narr', 'もう一度、ステージ2から。前とちがう選び方をすると、結果はどう変わるだろう？', startRun);
+}
+
+/* ---------- ふりかえり・提出 ---------- */
+function pickTag(k) { return '<span class="tagsm" style="background:' + WHO[k].color + '">' + WHO[k].name + '案</span>'; }
+function screenReflect() {
+  clearAll(); setBG('station', { mood: 'normal' });
+  const last = G.hist[G.hist.length - 1];
+  const rows = SCENES.map((sc, i) => '<div class="sr">' + pickTag(last.picks[i]) + '<span>' + (i + 1) + '. ' + sc.title + '</span></div>').join('');
+  const sel = G.hard || '';
+  ui('<div class="screen"><div class="panel reflect"><div><h2>あなたの選択</h2><div class="summary">' + rows + '</div>' +
+     '<p style="font-size:15px;margin:10px 0 0">最後の評価：<b>' + last.grade + '</b>　かたより：' + last.bias + '　挑戦' + G.hist.length + '回目</p></div>' +
+     '<div><h2>ふりかえり</h2>' +
+     '<div class="q">① いちばん迷った場面は？</div><select id="hard"><option value="">えらんでください</option>' + SCENES.map((sc, i) => '<option value="' + (i + 1) + '. ' + sc.title + '"' + (sel === (i + 1) + '. ' + sc.title ? ' selected' : '') + '>' + (i + 1) + '. ' + sc.title + '</option>').join('') + '</select>' +
+     '<div class="q">② その場面で、なぜ迷い、なぜそれを選びましたか？</div><textarea id="reason">' + esc(G.reason) + '</textarea>' +
+     '<div class="q">③ 「トレードオフ」とは何か、このゲームの例をあげて説明しよう。</div><textarea id="trade">' + esc(G.trade) + '</textarea>' +
+     '<div class="q">④ 意見のちがう3人の考えを、くらべて決められましたか？</div><div class="likert" id="lk">' +
+     ['とてもできた', 'だいたいできた', 'あまりできなかった', 'できなかった'].map((t) => '<button type="button" data-v="' + t + '"' + (G.self === t ? ' class="on"' : '') + '>' + t + '</button>').join('') + '</div>' +
+     '<div class="err" id="err"></div>' +
+     '<div style="display:flex;gap:14px;justify-content:flex-end"><button class="btn sub" id="bk">もどる</button><button class="btn green" id="sd">記録を送る ▶</button></div></div></div></div>');
+  $('#lk').querySelectorAll('button').forEach((b) => { b.onclick = () => { G.self = b.dataset.v; $('#lk').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); }; });
+  $('#bk').onclick = () => { collect(); clearUI(); showChars(ORDER); endingChoices(); };
+  $('#sd').onclick = () => {
+    collect();
+    if (!G.hard || G.reason.length < 3 || G.trade.length < 3 || !G.self) { $('#err').textContent = '①〜④をすべて入力してください。'; return; }
+    submit();
+  };
+}
+function collect() { G.hard = $('#hard').value; G.reason = $('#reason').value.trim(); G.trade = $('#trade').value.trim(); }
+
+function buildPayload() {
+  const last = G.hist[G.hist.length - 1];
+  const title = getEnding(last).title;
+  const pickLabels = last.picks.map((k, i) => (i + 1) + SCENES[i].title + ':' + WHO[k].name).join(' / ');
+  const history = G.hist.map((h) => h.grade + '(' + h.total + ')').join(' → ');
+  const meters = METERS[0].label + last.v.y + ' 品質' + last.v.q + ' コスト' + last.v.c + ' 環境' + last.v.e;
+  return {
+    /* 今の提出先（生物育成シミュレーターと同じApps Script）の「記録」シートにそのまま入る項目 */
+    kind: '名物づくり', sim: TOPIC.sim, kumi: G.cls, ban: G.num, name: G.name,
+    play: G.hist.length, overCount: '', setting: pickLabels, goal: '評価' + last.grade + '「' + title + '」', why: '評価の履歴：' + history,
+    turn: '10場面', summary: meters + '／合計' + last.total + '／かたより' + last.bias,
+    axes: ['もうけ・量 ' + last.axes.econ, '品質 ' + last.axes.qual, '環境 ' + last.axes.env, 'かたより ' + last.bias], total: '',
+    overCause: '', overReflect: '',
+    q1: '【迷った場面】' + G.hard + '【理由】' + G.reason, q2: '【トレードオフとは】' + G.trade, q3: '【3人の考えをくらべられたか】' + G.self, q4: '',
+    /* 専用シート「名物づくり」用（コード.gs を更新すると、こちらが使われる） */
+    ver: CONFIG.VERSION, attempts: G.hist.length, grade: last.grade, ending: title, totalScore: last.total, bias: last.bias,
+    y: last.v.y, q: last.v.q, c: last.v.c, e: last.v.e, econ: last.axes.econ, qual: last.axes.qual, env: last.axes.env,
+    picks: last.picks.join(','), pickLabels: pickLabels, history: history,
+    hard: G.hard, reason: G.reason, trade: G.trade, self: G.self, seconds: last.sec
+  };
+}
+function payloadText(p) {
+  return ['【道の駅の名物づくり（' + TOPIC.sub + '）　記録】', p.kumi + '組' + p.ban + '番　' + p.name, '評価：' + p.grade + '「' + p.ending + '」（合計' + p.totalScore + '／かたより' + p.bias + '）　挑戦' + p.attempts + '回', '履歴：' + p.history,
+    'メーター：' + METERS[0].label + p.y + ' 品質' + p.q + ' コスト' + p.c + ' 環境' + p.e, '選択：' + p.pickLabels,
+    '①いちばん迷った場面：' + p.hard, '②理由：' + p.reason, '③トレードオフとは：' + p.trade, '④3人の考えをくらべられたか：' + p.self].join('\n');
+}
+function postForm(url, data) {
+  const f = document.createElement('form'); f.method = 'POST'; f.action = url; f.target = '_blank'; f.acceptCharset = 'UTF-8'; f.style.display = 'none';
+  const i = document.createElement('input'); i.type = 'hidden'; i.name = 'payload'; i.value = JSON.stringify(data); f.appendChild(i);
+  document.body.appendChild(f); f.submit(); setTimeout(() => f.remove(), 1500);
+}
+function submit() {
+  const p = buildPayload();
+  let msg;
+  if (CONFIG.SUBMIT_URL) {
+    postForm(CONFIG.SUBMIT_URL, p);
+    msg = '新しいタブで提出画面が開きました。「✅ 提出できました」と表示されたら完了です（そのタブは閉じてかまいません）。<br>ログイン画面が出たときは、学校のアカウントでログインしてから「もう一度送る」を押してください。<br><button class="btn sub" id="resend" style="margin-top:10px">もう一度送る</button>';
+  } else {
+    msg = '<b style="color:#b91c1c">送信先が未設定です（先生用）。</b>下の文章をコピーして提出してください。<textarea class="copybox" id="cp" readonly>' + esc(payloadText(p)) + '</textarea><button class="btn sub" id="cpb" style="margin-top:6px">コピーする</button>';
+  }
+  clearUI();
+  ui('<div class="screen"><div class="panel form" style="width:880px"><h2>おつかれさま！</h2><div style="font-size:20px;line-height:1.7">' + msg + '</div>' +
+     '<div style="display:flex;gap:14px;justify-content:flex-end;margin-top:16px"><button class="btn sub" id="again">ステージ2からもう一度</button><button class="btn" id="home">タイトルへ</button></div></div></div>');
+  const rs = $('#resend'); if (rs) rs.onclick = () => postForm(CONFIG.SUBMIT_URL, p);
+  const cpb = $('#cpb'); if (cpb) cpb.onclick = () => { const t = $('#cp'); t.select(); try { document.execCommand('copy'); cpb.textContent = 'コピーしました'; } catch (e) { /* 手動でコピー */ } };
+  $('#again').onclick = stage2Retry; $('#home').onclick = () => { G = null; screenTitle(); };
+}
+
+/* ---------- 先生用（?teacher=1）：すべての結末を確認 ---------- */
+function teacherPanel() {
+  const t = $('#teacher'); if (!t) return;
+  t.style.display = 'flex';
+  const preset = {
+    '全部社長': Array(10).fill('boss'), '全部職人': Array(10).fill('craft'), '全部研究者': Array(10).fill('sci'),
+    'バランス(S)': ['boss', 'sci', 'craft', 'sci', 'craft', 'sci', 'sci', 'sci', 'sci', 'boss'],
+    'まぜた(B前後)': ['sci', 'sci', 'craft', 'sci', 'craft', 'sci', 'sci', 'craft', 'boss', 'sci']
+  };
+  t.innerHTML = '<b style="width:100%">先生用</b><button data-a="s1">ステージ1</button><button data-a="s2">ステージ2</button>' +
+    SCENES.map((sc, i) => '<button data-a="sc' + i + '">' + (i + 1) + '</button>').join('') +
+    Object.keys(preset).map((k) => '<button data-p="' + k + '">結末:' + k + '</button>').join('');
+  t.onclick = (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (!G || !G.name) { G = newGame(); G.name = 'テスト'; }
+    if (b.dataset.a === 's1') stage1();
+    else if (b.dataset.a === 's2') stage2Rules();
+    else if (b.dataset.a && b.dataset.a.indexOf('sc') === 0) { const i = +b.dataset.a.slice(2); G.S = newState(); G.attemptStart = Date.now(); clearAll(); showHud('ステージ2'); setMeters(G.S.v); showChars(ORDER); runScene(i); }
+    else if (b.dataset.p) { G.S = newState(); G.attemptStart = Date.now(); preset[b.dataset.p].forEach((k, i) => applyChoice(G.S, SCENES[i], k)); showEnding(); }
+  };
+}
+
+/* ---------- 起動 ---------- */
+buildChars();
+screenTitle();
+if (/[?&]teacher=1/.test(location.search)) teacherPanel();
+window.__game = { get G() { return G; }, screenTitle, stage1, showEnding, runScene };
+})();
+
+</script>
+</body>
+</html>
