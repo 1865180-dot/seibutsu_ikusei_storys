@@ -167,7 +167,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 const CONFIG = {
   SUBMIT_URL: 'https://script.google.com/a/macros/fuku-c.ed.jp/s/AKfycbz1UhknPTwIbp4X1SKVapY20HcQvc-wqbvM9AIvK74_iN1PgoVwjJ_uuVfBCLwdLgKkLQ/exec', // 生物育成シミュレーターと同じ提出先（空にすると「コピー」方式）
   PHOTO_DIR: 'photos/',      // ここに写真を置くと、資料カードの図が写真に替わる
-  PHOTO_CREDITS: {},         // 例：{ aburamushi: '撮影：○○' }
+  PHOTO_CREDITS: { taihi:'AI生成（イメージ）', sekkai:'AI生成（イメージ）', kasei:'AI生成（イメージ）', aburakasu:'AI生成（イメージ）', wakime:'AI生成（イメージ）', aburamushi:'AI生成（イメージ）', konajirami:'AI生成（イメージ）', tentoumushi:'AI生成（イメージ）' },         // 例：{ aburamushi: '撮影：○○' }
   CLASSES: [1, 2, 3, 4, 5, 6, 7, 8],
   MAX_NUM: 40,
   CREDIT: '© Irie Kanji',
@@ -349,7 +349,7 @@ const SCENES = [
     id: 's6', title: 'わき芽かき', bg: { kind: 'house', mode: 'shoots' }, trade: '手間をかける ⇔ 収量・品質',
     mat: { title: '資料：わき芽は、どこから出る？', items: [
       { fig: 'wakime', wide: true, cap: 'わき芽は、葉のつけ根（主茎と葉の間）から出る新しい芽。小さいうちに、手でつみ取る（わき芽かき）。花房は、葉と葉の間の茎から出る。' },
-      { photo: 'wakime', cap: '実物のわき芽。' } ] },
+      { photo: 'wakime', cap: '写真で見るわき芽：主茎と葉の間から、小さな芽が立ち上がっている。' } ] },
     intro: 'ぐんぐん育つトマト。葉のつけ根から、わき芽が次々に出てきた。',
     talk: {
       boss: '「わき芽なんて放っておけ！枝が増えれば実もたくさんつく。手間もいらん！」',
