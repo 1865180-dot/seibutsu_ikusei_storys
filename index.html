@@ -140,6 +140,22 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 #teacher button{font-size:12px;padding:3px 7px;border-radius:6px;border:1px solid #64748b;background:#fff}
 @media (prefers-reduced-motion:reduce){.slot .fig{animation:none}.nx{animation:none}}
 
+/* 資料カード */
+.matwrap{background:rgba(15,23,42,.55)}
+.matpanel{width:1200px;max-height:690px;padding:18px 26px}
+.matpanel h2{margin:0 0 10px;font-size:28px;color:#14532d}
+.mats{display:flex;gap:16px;align-items:stretch;margin-bottom:12px}
+.mat{flex:1;margin:0;background:#f1f5f9;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.mat.wide{flex:1.7}
+.mat.wide .pic{aspect-ratio:auto;height:400px}
+.mat .pic{aspect-ratio:520/330;max-height:400px;background:#eef2f6;display:flex;align-items:center;justify-content:center}
+.mat .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.mat .pic svg{width:100%;height:100%;display:block}
+.mat figcaption{padding:8px 12px 10px;font-size:17px;line-height:1.5;font-weight:500}
+.mat figcaption small{display:block;font-size:12px;color:#64748b;margin-top:2px}
+.matbtn{margin-left:auto;font-size:16px;padding:6px 16px;min-height:44px}
+.matbtn + .decide{margin-left:0}
+
 </style>
 </head>
 <body>
@@ -149,7 +165,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <script>
 /* ===== データと得点のしくみ（画面に依存しない部分） ===== */
 const CONFIG = {
-  SUBMIT_URL: '',            // ← Apps Script のウェブアプリURLを入れる（空なら「コピー」方式）
+  SUBMIT_URL: 'https://script.google.com/a/macros/fuku-c.ed.jp/s/AKfycbz1UhknPTwIbp4X1SKVapY20HcQvc-wqbvM9AIvK74_iN1PgoVwjJ_uuVfBCLwdLgKkLQ/exec', // 生物育成シミュレーターと同じ提出先（空にすると「コピー」方式）
+  PHOTO_DIR: 'photos/',      // ここに写真を置くと、資料カードの図が写真に替わる
+  PHOTO_CREDITS: {},         // 例：{ aburamushi: '撮影：○○' }
   CLASSES: [1, 2, 3, 4, 5, 6, 7, 8],
   MAX_NUM: 40,
   CREDIT: '© Irie Kanji',
@@ -225,6 +243,9 @@ const SCENES = [
   },
   {
     id: 's2', title: '土づくり', bg: { kind: 'field', tool: 'hoe' }, trade: '手間をへらす ⇔ 土の健康',
+    mat: { title: '資料：よい土ってどんな土？', items: [
+      { fig: 'danryu', cap: '団粒構造（だんりゅうこうぞう）：土の粒が小さなかたまりになり、すき間に水と空気が入る。根がのびやすい。' },
+      { photo: 'taihi', fig: 'taihi', cap: '堆肥（たいひ）：落ち葉・わら・家畜のふんなどを、微生物が分解したもの。土をふかふかにする。' } ] },
     intro: '植える前の土づくり。畑の土を、トマトが育ちやすい状態にしよう。',
     talk: {
       boss: '「土づくりなんて時間のムダだ！耕うん機で浅くザッと耕して、化学肥料をまけばいい。」',
@@ -248,6 +269,9 @@ const SCENES = [
   },
   {
     id: 's3', title: '土のpH', bg: { kind: 'field', tool: 'ph' }, trade: '検査の手間とお金 ⇔ 収量と品質',
+    mat: { title: '資料：土のpH（ピーエイチ）', items: [
+      { fig: 'ph', cap: 'pH7が中性。数字が小さいほど酸性、大きいほどアルカリ性。トマトはpH6.0〜6.5（弱い酸性）でよく育つ。' },
+      { photo: 'sekkai', fig: 'sekkai', cap: '苦土石灰（くどせっかい）：酸性にかたむいた土にまいて、pHを上げる。' } ] },
     intro: 'トマトは、土の酸性・アルカリ性の度合い（pH）にこだわる作物だ。pHを調べる道具が届いた。',
     talk: {
       boss: '「測るだけムダだ！そのまま植えれば、検査代も手間もゼロだぞ。」',
@@ -271,7 +295,11 @@ const SCENES = [
   },
   {
     id: 's4', title: '元肥', bg: { kind: 'field', tool: 'bag' }, trade: '生産量がふえた ⇔ コスト・環境問題',
-    intro: '植える前に、肥料（元肥）をまく。肥料の三要素は、窒素・リン酸・カリだ。',
+    mat: { title: '資料：肥料の三要素と、肥料の種類', items: [
+      { fig: 'npk', cap: '窒素（N）は葉や茎、リン酸（P）は花や実、カリウム（K）は根や実を育てる。' },
+      { photo: 'kasei', fig: 'kasei', cap: '化成肥料：工場でつくった粒の肥料。成分がはっきりしていて、すぐに効く。' },
+      { photo: 'aburakasu', fig: 'aburakasu', cap: '油かす（有機肥料）：ナタネなどから油をしぼった残り。微生物に分解されて、ゆっくり効く。' } ] },
+    intro: '植える前に、肥料（元肥）をまく。肥料の三要素は、窒素（N）・リン酸（P）・カリウム（K）だ。',
     talk: {
       boss: '「肥料は多いほどよく育つ！窒素の多い化成肥料を、たっぷりまこう。」',
       craft: '「油かすなどの有機肥料を使うんだ。ゆっくり効いて、味に深みが出る。」',
@@ -285,7 +313,7 @@ const SCENES = [
       sci:   { label: 'バランスのよい肥料を、必要な量だけ', desc: '土の状態から量を決める。むだな流出が少なく、環境にやさしい。', d: { y: 3, q: 3, c: 3, e: 5 },
                result: '三要素のバランスを見ながら、必要な量だけ肥料をまいた。' }
     },
-    memo: '窒素は葉、リン酸は花や実、カリは根や実の充実に役立つ。窒素が多すぎると、葉ばかりしげって実がつかない「つるぼけ」になる。',
+    memo: '窒素は葉、リン酸は花や実、カリウムは根や実の充実に役立つ。窒素が多すぎると、葉ばかりしげって実がつかない「つるぼけ」になる。',
     react: {
       boss:  { pos: 'たっぷり与えたぞ。収穫が楽しみだ！', neg: '肥料代がかさむな…。' },
       craft: { pos: 'じっくり効く肥料は、味をつくる。', neg: '窒素ばかり…葉ばかりで味が落ちるぞ。' },
@@ -319,6 +347,9 @@ const SCENES = [
   },
   {
     id: 's6', title: 'わき芽かき', bg: { kind: 'house', mode: 'shoots' }, trade: '手間をかける ⇔ 収量・品質',
+    mat: { title: '資料：わき芽は、どこから出る？', items: [
+      { fig: 'wakime', wide: true, cap: 'わき芽は、葉のつけ根（主茎と葉の間）から出る新しい芽。小さいうちに、手でつみ取る（わき芽かき）。花房は、葉と葉の間の茎から出る。' },
+      { photo: 'wakime', cap: '実物のわき芽。' } ] },
     intro: 'ぐんぐん育つトマト。葉のつけ根から、わき芽が次々に出てきた。',
     talk: {
       boss: '「わき芽なんて放っておけ！枝が増えれば実もたくさんつく。手間もいらん！」',
@@ -342,6 +373,10 @@ const SCENES = [
   },
   {
     id: 's7', title: '害虫・病気', bg: { kind: 'bugs' }, trade: '効率よくできる ⇔ 健康（環境・安全）',
+    mat: { title: '資料：トマトにつく虫と、天敵', items: [
+      { photo: 'aburamushi', fig: 'aburamushi', cap: 'アブラムシ（体長1〜3mm）：新芽や葉の裏に群がって汁を吸う。ウイルス病も運ぶ。' },
+      { photo: 'konajirami', fig: 'konajirami', cap: 'コナジラミ（体長約1mm）：白い小さな虫。葉の裏について汁を吸う。' },
+      { photo: 'tentoumushi', fig: 'tentoumushi', cap: '天敵のテントウムシ：成虫も幼虫も、アブラムシをたくさん食べる。' } ] },
     intro: '葉の裏に、アブラムシやコナジラミが見つかった。虫への対策を決めよう。',
     talk: {
       boss: '「農薬をまとめて散布だ！週に1回、全部にまけば確実だろう。」',
@@ -670,8 +705,8 @@ function bgSVG(kind, o = {}) {
       } else if (tool === 'ph') {
         s += `<g transform="translate(820 380)"><rect x="-8" y="0" width="16" height="250" fill="#6b7280"/><rect x="-60" y="-100" width="120" height="110" rx="16" fill="#1f2937"/><rect x="-46" y="-86" width="92" height="46" rx="6" fill="#d9f99d"/><text x="0" y="-52" font-size="34" font-weight="900" text-anchor="middle" fill="#14532d" font-family="monospace">pH 6.2</text><circle cx="-28" cy="-18" r="9" fill="#22c55e"/><circle cx="0" cy="-18" r="9" fill="#f59e0b"/><circle cx="28" cy="-18" r="9" fill="#ef4444"/></g>`;
       } else if (tool === 'bag') {
-        const bag = (x, y, c, lab, sub) => `<g transform="translate(${x} ${y}) scale(.6)"><rect x="-70" y="-120" width="140" height="170" rx="14" fill="${c}"/><rect x="-70" y="-120" width="140" height="28" rx="14" fill="#fff" opacity=".35"/><text x="0" y="-30" font-size="58" font-weight="900" text-anchor="middle" fill="#fff" font-family="sans-serif">${lab}</text><text x="0" y="14" font-size="22" font-weight="700" text-anchor="middle" fill="#fff" font-family="sans-serif">${sub}</text></g>`;
-        s += bag(790, 468, '#2f9e44', 'N', '窒素（葉）') + bag(872, 468, '#e8590c', 'P', 'リン酸（実）') + bag(954, 468, '#1c7ed6', 'K', 'カリ（根）');
+        const bag = (x, y, c, lab, sub) => `<g transform="translate(${x} ${y}) scale(.6)"><rect x="-70" y="-120" width="140" height="170" rx="14" fill="${c}"/><rect x="-70" y="-120" width="140" height="28" rx="14" fill="#fff" opacity=".35"/><text x="0" y="-30" font-size="58" font-weight="900" text-anchor="middle" fill="#fff" font-family="sans-serif">${lab}</text><text x="0" y="14" font-size="18" font-weight="700" text-anchor="middle" fill="#fff" font-family="sans-serif">${sub}</text></g>`;
+        s += bag(790, 468, '#2f9e44', 'N', '窒素（葉）') + bag(872, 468, '#e8590c', 'P', 'リン酸（実）') + bag(954, 468, '#1c7ed6', 'K', 'カリウム（根）');
       }
       break;
     }
@@ -680,12 +715,11 @@ function bgSVG(kind, o = {}) {
       s += defsSky(id, '#d9f2d0', '#f2fae8') + greenhouseFrame(0.1);
       s += `<rect y="520" width="${W}" height="200" fill="#8b5e34"/>`;
       const xs = [160, 360, 560, 760, 960, 1150];
-      xs.forEach((x, i) => {
-        const jungle = mode === 'shoots' && i % 2 === 0;
-        s += plant(x, 600, jungle ? 420 : 380, { fruit: '#e11d1d', n: 3, fruits: ['#e11d1d', '#f59e0b', '#6dbf4b'], s: jungle ? 1.35 : 1, leaf: '#3f9b3a' });
-      });
       if (mode === 'shoots') {
-        [[262, 360], [560, 330], [860, 380]].forEach(([x, y]) => { s += `<circle cx="${x}" cy="${y}" r="26" fill="none" stroke="#f59e0b" stroke-width="5" stroke-dasharray="8 6"/>`; });
+        // 人物のあいだに、わき芽の出る位置（葉のつけ根）を大きく見せる
+        s += `<g transform="translate(325 185) scale(.7)">${axilArt(true)}</g><g transform="translate(955 185) scale(-.7 .7)">${axilArt(true)}</g>`;
+      } else {
+        xs.forEach((x) => { s += plant(x, 600, 380, { fruit: '#e11d1d', n: 3, fruits: ['#e11d1d', '#f59e0b', '#6dbf4b'], leaf: '#3f9b3a' }); });
       }
       if (mode === 'water') {
         s += `<path d="M60 640 H1220" stroke="#1e3a8a" stroke-width="10" stroke-linecap="round"/>`;
@@ -818,7 +852,116 @@ function radarSVG(a) {
   return s + '</svg>';
 }
 
-if (typeof module !== 'undefined') module.exports = { bgSVG, charSVG, radarSVG };
+/* ---- わき芽（葉のつけ根から出る芽）を正確に描く部品 ---- */
+function leafArt(x1, y1, x2, y2, sc) {
+  const dx = x2 - x1, dy = y2 - y1, ang = Math.atan2(dy, dx) * 180 / Math.PI;
+  const L = 58 * sc, Wd = 15 * sc;
+  const leaflet = (x, y, a, k, c) => `<path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a.toFixed(1)}) scale(${k})" d="M0 0 C ${L * .25} ${-Wd * 1.25} ${L * .7} ${-Wd} ${L} 0 C ${L * .7} ${Wd} ${L * .25} ${Wd * 1.25} 0 0 Z" fill="${c}" stroke="#2f6d24" stroke-width="1.5"/><path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a.toFixed(1)}) scale(${k})" d="M2 0 H ${L * .9}" stroke="#2f6d24" stroke-width="1.2" opacity=".6"/>`;
+  let s = `<path d="M${x1} ${y1} Q ${(x1 + x2) / 2} ${(y1 + y2) / 2 + 14 * sc} ${x2} ${y2}" stroke="#4f8f2f" stroke-width="${8 * sc}" fill="none" stroke-linecap="round"/>`;
+  [[.42, .8], [.68, .95]].forEach(([t, k]) => {
+    const x = x1 + dx * t, y = y1 + dy * t + 7 * sc * (1 - Math.abs(t - .5) * 2);
+    s += leaflet(x, y, ang - 62, k, '#4aa23c') + leaflet(x, y, ang + 62, k, '#3f9b3a');
+  });
+  s += leaflet(x2 - dx * .04, y2 - dy * .04, ang, 1.15, '#4aa23c');
+  return s;
+}
+function axilArt(mark) {
+  let s = '';
+  // 主茎
+  s += `<path d="M112 420 C108 300 116 140 110 0" stroke="#4f8f2f" stroke-width="26" fill="none"/>`;
+  s += `<path d="M105 420 C101 300 109 140 103 0" stroke="#7cc155" stroke-width="5" fill="none" opacity=".7"/>`;
+  // 葉（右下・左下）
+  s += leafArt(120, 300, 292, 222, 1);
+  s += leafArt(102, 392, -30, 340, .85);
+  s += leafArt(104, 110, -40, 40, .8);
+  // 花房（葉と葉の間の茎から出る）
+  s += `<path d="M100 205 Q 70 196 44 176" stroke="#5a9a34" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  [[44, 176], [58, 196], [28, 190]].forEach(([x, y]) => { s += `<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map((a) => `<ellipse rx="4" ry="10" transform="rotate(${a}) translate(0 -8)" fill="#facc15"/>`).join('')}<circle r="4" fill="#ca8a04"/></g>`; });
+  // わき芽（葉のつけ根＝主茎と葉の間から、ななめ上へ）
+  s += `<path d="M122 293 C134 262 150 226 172 190" stroke="#8fd14f" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+  const sl = (x, y, a, k) => `<path transform="translate(${x} ${y}) rotate(${a}) scale(${k})" d="M0 0 C 10 -14 28 -12 40 0 C 28 12 10 14 0 0 Z" fill="#a3e05f" stroke="#4d8f2a" stroke-width="1.5"/>`;
+  s += sl(150, 232, -160, .8) + sl(158, 214, 10, .8) + sl(168, 196, -120, .9) + sl(172, 190, -20, .9) + sl(172, 190, -68, 1.1);
+  if (mark) s += `<ellipse cx="152" cy="232" rx="50" ry="72" transform="rotate(28 152 232)" fill="none" stroke="#f97316" stroke-width="5" stroke-dasharray="10 7"/>`;
+  return s;
+}
+const FIG = {
+  wakime() {
+    const lab = (x, y, t, c = '#1f2937', sz = 22) => `<text x="${x}" y="${y}" font-size="${sz}" font-weight="900" fill="${c}" font-family="sans-serif">${t}</text>`;
+    const ln = (x1, y1, x2, y2, c = '#1f2937') => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c}" stroke-width="2.5"/><circle cx="${x2}" cy="${y2}" r="4" fill="${c}"/>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 430" role="img" aria-label="わき芽の位置の図"><rect width="620" height="430" fill="#f3faec"/>
+<g transform="translate(150 5)">${axilArt(true)}</g>
+${lab(300, 60, '主茎（しゅけい）')}${ln(296, 52, 268, 70)}
+${lab(360, 150, 'わき芽', '#c2410c', 30)}${lab(360, 178, 'ここをつみ取る', '#c2410c', 18)}${ln(356, 142, 326, 196, '#c2410c')}
+${lab(468, 290, '葉')}${ln(464, 284, 420, 250)}
+${lab(296, 372, '葉のつけ根', '#1f2937', 20)}${ln(292, 364, 274, 302)}
+${lab(14, 150, '花房（かぼう）', '#1f2937', 20)}${ln(120, 156, 186, 178)}
+</svg>`;
+  },
+  danryu() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="団粒構造の図"><rect width="520" height="330" fill="#fdf6e9"/>`;
+    s += `<rect x="20" y="50" width="230" height="230" rx="12" fill="#e9f5ff"/><rect x="270" y="50" width="230" height="230" rx="12" fill="#c9a77a"/>`;
+    const cl = [[70, 100], [140, 95], [205, 110], [60, 170], [128, 165], [198, 180], [80, 240], [150, 232], [212, 245]];
+    cl.forEach(([x, y]) => { for (let k = 0; k < 7; k++) { const a = k * 51, r = k ? 15 : 0; s += `<circle cx="${x + r * Math.cos(a)}" cy="${y + r * Math.sin(a)}" r="10" fill="${k % 2 ? '#8b5e34' : '#a47548'}"/>`; } });
+    for (let i = 0; i < 12; i++) for (let j = 0; j < 12; j++) s += `<circle cx="${281 + i * 19}" cy="${61 + j * 19}" r="9.5" fill="${(i + j) % 2 ? '#8b5e34' : '#7a5230'}"/>`;
+    s += `<text x="135" y="36" font-size="22" font-weight="900" text-anchor="middle" fill="#14532d" font-family="sans-serif">団粒構造の土</text><text x="385" y="36" font-size="22" font-weight="900" text-anchor="middle" fill="#7c2d12" font-family="sans-serif">かたくしまった土</text>`;
+    s += `<text x="135" y="310" font-size="17" font-weight="700" text-anchor="middle" fill="#1e3a8a" font-family="sans-serif">すき間に水と空気が入る</text><text x="385" y="310" font-size="17" font-weight="700" text-anchor="middle" fill="#7c2d12" font-family="sans-serif">すき間がなく、根がのびにくい</text>`;
+    return s + '</svg>';
+  },
+  ph() {
+    const cols = ['#e11d48', '#f43f5e', '#f97316', '#fb923c', '#facc15', '#bef264', '#4ade80', '#22c55e', '#14b8a6', '#0ea5e9', '#3b82f6', '#6366f1', '#7c3aed', '#6d28d9'];
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 330" role="img" aria-label="pHのものさし"><rect width="560" height="330" fill="#f8fafc"/>`;
+    cols.forEach((c, i) => { s += `<rect x="${28 + i * 36}" y="120" width="36" height="70" fill="${c}"/><text x="${46 + i * 36}" y="216" font-size="18" font-weight="700" text-anchor="middle" fill="#1f2937" font-family="sans-serif">${i + 1}</text>`; });
+    s += `<text x="100" y="100" font-size="24" font-weight="900" text-anchor="middle" fill="#be123c" font-family="sans-serif">酸性</text><text x="262" y="100" font-size="24" font-weight="900" text-anchor="middle" fill="#15803d" font-family="sans-serif">中性(7)</text><text x="450" y="100" font-size="24" font-weight="900" text-anchor="middle" fill="#4338ca" font-family="sans-serif">アルカリ性</text>`;
+    s += `<rect x="208" y="112" width="18" height="86" fill="none" stroke="#111827" stroke-width="4"/><path d="M217 240 V202" stroke="#111827" stroke-width="3"/><text x="217" y="268" font-size="22" font-weight="900" text-anchor="middle" fill="#111827" font-family="sans-serif">トマトに合うのは pH6.0〜6.5</text>`;
+    s += `<text x="280" y="46" font-size="24" font-weight="900" text-anchor="middle" fill="#1f2937" font-family="sans-serif">pHのものさし</text>`;
+    return s + '</svg>';
+  },
+  npk() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="肥料の三要素の図"><rect width="520" height="330" fill="#f3faec"/><rect y="250" width="520" height="80" fill="#a47548"/>`;
+    s += `<g transform="translate(120 250) scale(.62)">${plant(0, 0, 330, { fruit: '#e11d1d', n: 3 })}</g>`;
+    s += `<path d="M120 250 C100 280 80 290 60 310 M120 250 C125 285 140 295 150 318 M120 250 C150 270 170 280 190 300" stroke="#f5e6c8" stroke-width="4" fill="none"/>`;
+    const row = (y, c, l, n, t, tx, ty) => `<rect x="250" y="${y}" width="250" height="74" rx="12" fill="${c}"/><text x="290" y="${y + 52}" font-size="46" font-weight="900" text-anchor="middle" fill="#fff" font-family="sans-serif">${l}</text><text x="330" y="${y + 32}" font-size="21" font-weight="900" fill="#fff" font-family="sans-serif">${n}</text><text x="330" y="${y + 58}" font-size="17" font-weight="700" fill="#fff" font-family="sans-serif">${t}</text><path d="M250 ${y + 37} L${tx} ${ty}" stroke="${c}" stroke-width="4"/>`;
+    s += row(16, '#2f9e44', 'N', '窒素（ちっそ）', '葉や茎を育てる', 150, 90) + row(104, '#e8590c', 'P', 'リン酸', '花や実を育てる', 140, 200) + row(192, '#1c7ed6', 'K', 'カリウム', '根や実をじょうぶに', 160, 290);
+    return s + '</svg>';
+  },
+  kasei() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="化成肥料の絵"><rect width="520" height="330" fill="#eef2f7"/>`;
+    for (let i = 0; i < 90; i++) { const x = 40 + (i * 137) % 440, y = 60 + (i * 89) % 230, r = 11 + (i % 4) * 2; s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${['#d1d5db', '#e5e7eb', '#f3d7c4', '#cbd5e1'][i % 4]}" stroke="#9ca3af" stroke-width="1.5"/><circle cx="${x - r * .3}" cy="${y - r * .3}" r="${r * .25}" fill="#fff" opacity=".7"/>`; }
+    return s + `<text x="260" y="36" font-size="22" font-weight="900" text-anchor="middle" fill="#1f2937" font-family="sans-serif">化成肥料（絵）　表示例 8-8-8</text></svg>`;
+  },
+  aburakasu() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="油かすの絵"><rect width="520" height="330" fill="#f6efe3"/><path d="M40 300 Q260 40 480 300 Z" fill="#8a6a3a"/>`;
+    for (let i = 0; i < 160; i++) { const x = 70 + (i * 131) % 380, y = 120 + (i * 71) % 170; if (y > 300 - (1 - Math.abs(x - 260) / 220) * 250) s += `<rect x="${x}" y="${y}" width="9" height="5" rx="2" transform="rotate(${i * 37} ${x} ${y})" fill="${['#6b4f25', '#a8843f', '#5a4220'][i % 3]}"/>`; }
+    return s + `<text x="260" y="36" font-size="22" font-weight="900" text-anchor="middle" fill="#1f2937" font-family="sans-serif">油かす（絵）</text></svg>`;
+  },
+  taihi() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="堆肥の絵"><rect width="520" height="330" fill="#eef6e6"/><path d="M30 300 Q260 30 490 300 Z" fill="#4a3421"/>`;
+    for (let i = 0; i < 60; i++) { const x = 90 + (i * 127) % 340, y = 150 + (i * 67) % 140; s += `<path d="M${x} ${y} q10 -8 20 0 q-10 8 -20 0 Z" transform="rotate(${i * 53} ${x} ${y})" fill="${['#7a5a2e', '#8f7a3a', '#5d4426'][i % 3]}"/>`; }
+    return s + `<path d="M150 90 q8 -18 0 -34 M260 60 q8 -18 0 -34 M370 90 q8 -18 0 -34" stroke="#9ca3af" stroke-width="4" fill="none" stroke-linecap="round"/><text x="260" y="322" font-size="18" font-weight="700" text-anchor="middle" fill="#fff" font-family="sans-serif">堆肥（絵）発酵して熱が出る</text></svg>`;
+  },
+  sekkai() {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="苦土石灰の絵"><rect width="520" height="330" fill="#a47548"/>`;
+    for (let i = 0; i < 220; i++) s += `<circle cx="${20 + (i * 149) % 480}" cy="${70 + (i * 83) % 240}" r="${3 + i % 4}" fill="#f8fafc" opacity=".9"/>`;
+    return s + `<rect width="520" height="50" fill="#fff" opacity=".85"/><text x="260" y="34" font-size="22" font-weight="900" text-anchor="middle" fill="#1f2937" font-family="sans-serif">苦土石灰（絵）白い粒や粉</text></svg>`;
+  },
+  aburamushi() {
+    const one = (x, y, k, r) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${k})"><path d="M-22 -14 l-16 -14 M-6 -18 l-6 -20 M12 -16 l8 -20 M-22 14 l-16 14 M-6 18 l-6 20 M12 16 l8 20" stroke="#365314" stroke-width="3"/><path d="M-40 -6 q-26 -22 -44 -8 M-40 6 q-26 22 -44 8" stroke="#365314" stroke-width="2.5" fill="none"/><ellipse cx="6" cy="0" rx="34" ry="24" fill="#84cc16" stroke="#3f6212" stroke-width="2.5"/><circle cx="-32" cy="0" r="13" fill="#65a30d" stroke="#3f6212" stroke-width="2.5"/><circle cx="-38" cy="-6" r="3" fill="#7f1d1d"/><circle cx="-38" cy="6" r="3" fill="#7f1d1d"/><path d="M30 -12 l18 -10 M30 12 l18 10" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/></g>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="アブラムシの絵"><rect width="520" height="330" fill="#cfe8b4"/><path d="M0 200 Q260 120 520 210" stroke="#7fb35a" stroke-width="10" fill="none"/>${one(250, 150, 2.1, -8)}${one(90, 250, .7, 30)}${one(150, 285, .6, -20)}${one(410, 270, .7, 160)}${one(450, 215, .55, 200)}<text x="14" y="30" font-size="20" font-weight="900" fill="#1f2937" font-family="sans-serif">アブラムシ（絵）</text><text x="350" y="60" font-size="16" font-weight="700" fill="#1f2937" font-family="sans-serif">おしりに2本の管</text><path d="M400 66 L352 120" stroke="#1f2937" stroke-width="2"/></svg>`;
+  },
+  konajirami() {
+    const one = (x, y, k, r) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${k})"><ellipse cx="0" cy="-4" rx="9" ry="20" fill="#fde68a" stroke="#a16207" stroke-width="1.5"/><path d="M0 -18 C -34 -6 -40 30 -24 44 C -8 40 0 10 0 -18 Z" fill="#fff" stroke="#94a3b8" stroke-width="2"/><path d="M0 -18 C 34 -6 40 30 24 44 C 8 40 0 10 0 -18 Z" fill="#fff" stroke="#94a3b8" stroke-width="2"/><circle cx="0" cy="-24" r="7" fill="#fcd34d" stroke="#a16207" stroke-width="1.5"/><circle cx="-4" cy="-26" r="2" fill="#7f1d1d"/><circle cx="4" cy="-26" r="2" fill="#7f1d1d"/></g>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="コナジラミの絵"><rect width="520" height="330" fill="#5f9e4a"/><path d="M0 165 H520 M130 165 L60 40 M260 165 L230 20 M390 165 L450 40 M130 165 L70 300 M260 165 L250 320 M390 165 L440 300" stroke="#8cc472" stroke-width="5" fill="none"/>${one(250, 160, 2.3, 10)}${one(90, 90, .8, -30)}${one(420, 100, .7, 40)}${one(120, 260, .75, 160)}${one(400, 255, .8, -140)}${one(330, 60, .6, 80)}<text x="14" y="30" font-size="20" font-weight="900" fill="#fff" font-family="sans-serif">コナジラミ（絵）葉の裏につく</text></svg>`;
+  },
+  tentoumushi() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-label="テントウムシの絵"><rect width="520" height="330" fill="#cfe8b4"/><path d="M0 250 Q260 180 520 250" stroke="#7fb35a" stroke-width="12" fill="none"/>
+<g transform="translate(230 170)"><path d="M-70 40 l-30 26 M-10 62 l-6 34 M60 46 l26 28" stroke="#111827" stroke-width="6"/><ellipse cx="-92" cy="0" rx="30" ry="42" fill="#111827"/><circle cx="-108" cy="-22" r="8" fill="#fff"/><circle cx="-108" cy="22" r="8" fill="#fff"/><ellipse cx="0" cy="0" rx="100" ry="76" fill="#dc2626" stroke="#7f1d1d" stroke-width="4"/><path d="M-98 0 H100" stroke="#7f1d1d" stroke-width="3"/>${[[-84, 0, 13], [-40, -40, 14], [-40, 40, 14], [20, -30, 15], [20, 30, 15], [66, -34, 11], [66, 34, 11]].filter(d => d[2]).map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#111827"/>`).join('')}</g>
+<g transform="translate(420 215) scale(.5)"><ellipse rx="34" ry="24" fill="#84cc16" stroke="#3f6212" stroke-width="3"/><circle cx="-32" r="13" fill="#65a30d" stroke="#3f6212" stroke-width="3"/></g><g transform="translate(455 240) scale(.4)"><ellipse rx="34" ry="24" fill="#84cc16" stroke="#3f6212" stroke-width="3"/><circle cx="-32" r="13" fill="#65a30d" stroke="#3f6212" stroke-width="3"/></g>
+<text x="14" y="30" font-size="20" font-weight="900" fill="#1f2937" font-family="sans-serif">ナナホシテントウ（絵）アブラムシを食べる</text></svg>`;
+  }
+};
+function figSVG(name) { return FIG[name] ? FIG[name]() : ''; }
+
+if (typeof module !== 'undefined') module.exports = { bgSVG, charSVG, radarSVG, figSVG };
 
 /* ===== ゲーム本体 ===== */
 (function () {
@@ -1064,28 +1207,44 @@ function startRun() {
   runScene(0);
 }
 
-function shuffleKeys(i) {
-  const a = ORDER.slice();
-  // 場面ごとに並び順を入れ替える（位置で選ばないように）
-  const seed = (G.hist.length * 7 + i * 5 + 3) % 6;
-  const perms = [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [2, 1, 0], [1, 0, 2]];
-  return perms[seed].map((j) => a[j]);
-}
-
 function runScene(i) {
   const sc = SCENES[i];
   hideDlg(); setBG(sc.bg.kind, sc.bg); setChip('ステージ2　場面 ' + (i + 1) + ' / 10　' + sc.title);
   showChars(ORDER); resetChars(); dimChars(null);
-  say('narr', sc.intro, () => talkPhase(i));
+  say('narr', sc.intro, () => (sc.mat ? showMat(sc, () => talkPhase(i)) : talkPhase(i)));
 }
+
+/* ---------- 資料カード（写真があれば写真、なければ図） ---------- */
+function showMat(sc, done) {
+  const m = sc.mat;
+  const items = m.items.map((it, k) => {
+    const credit = it.photo && CONFIG.PHOTO_CREDITS[it.photo] ? CONFIG.PHOTO_CREDITS[it.photo] : '';
+    const pic = it.photo
+      ? '<img alt="" data-k="' + k + '" src="' + CONFIG.PHOTO_DIR + it.photo + '.jpg">'
+      : figSVG(it.fig);
+    return '<figure class="mat' + (it.wide ? ' wide' : '') + '" data-k="' + k + '"><div class="pic">' + pic + '</div><figcaption>' + it.cap + (credit ? '<small>' + esc(credit) + '</small>' : '') + '</figcaption></figure>';
+  }).join('');
+  const box = document.createElement('div'); box.className = 'screen matwrap';
+  box.innerHTML = '<div class="panel matpanel"><h2>' + m.title + '</h2><div class="mats">' + items + '</div><div style="text-align:right"><button class="big" id="matok">' + (done ? '3人の意見を聞く ▶' : 'とじる') + '</button></div></div>';
+  uiEl.style.display = 'block'; uiEl.innerHTML = ''; uiEl.appendChild(box);
+  box.querySelectorAll('img').forEach((img) => {
+    img.onerror = () => {
+      const it = m.items[+img.dataset.k], fg = img.closest('figure');
+      if (it.fig) img.parentNode.innerHTML = figSVG(it.fig); else fg.remove();
+    };
+  });
+  $('#matok').onclick = () => { clearUI(); if (done) done(); };
+  $('#matok').focus();
+}
+
 
 function talkPhase(i) {
   const sc = SCENES[i];
   ORDER.forEach((w, k) => setTimeout(() => setBubble(w, sc.talk[w], true), 250 + k * 600));
-  const keys = shuffleKeys(i);
+  const keys = ORDER; // 人物の並び（社長・職人・研究者）と同じ順に固定
   let sel = null;
   showDlg('<div class="prompt"><b>3人の意見をくらべて、どうする？</b><span class="trade">トレードオフ：' + sc.trade + '</span>' +
-    '<button class="btn decide" id="dec" disabled>これに決める ▶</button></div><div class="cards">' +
+    (sc.mat ? '<button class="btn sub matbtn" id="matb">資料を見る</button>' : '') + '<button class="btn decide" id="dec" disabled>これに決める ▶</button></div><div class="cards">' +
     keys.map((k) => { const c = sc.ch[k]; return '<button class="card" data-k="' + k + '" style="--c:' + WHO[k].color + ';--soft:' + WHO[k].soft + '"><span class="tg">' + WHO[k].name + '案</span><b>' + c.label + '</b><small>' + c.desc + '</small></button>'; }).join('') + '</div>');
   dlgEl.querySelectorAll('.card').forEach((b) => {
     b.onclick = () => {
@@ -1094,6 +1253,7 @@ function talkPhase(i) {
       $('#dec').disabled = false;
     };
   });
+  if (sc.mat) $('#matb').onclick = () => showMat(sc, null);
   $('#dec').onclick = () => { if (sel) resultPhase(i, sel); };
 }
 
@@ -1199,36 +1359,48 @@ function collect() { G.hard = $('#hard').value; G.reason = $('#reason').value.tr
 
 function buildPayload() {
   const last = G.hist[G.hist.length - 1];
+  const title = getEnding(last).title;
+  const pickLabels = last.picks.map((k, i) => (i + 1) + SCENES[i].title + ':' + WHO[k].name).join(' / ');
+  const history = G.hist.map((h) => h.grade + '(' + h.total + ')').join(' → ');
+  const meters = '収量' + last.v.y + ' 品質' + last.v.q + ' コスト' + last.v.c + ' 環境' + last.v.e;
   return {
-    app: 'michinoeki-tomato', ver: CONFIG.VERSION, ts: new Date().toISOString(),
-    cls: G.cls, num: G.num, name: G.name, attempts: G.hist.length,
-    grade: last.grade, ending: last.type, total: last.total, bias: last.bias,
-    y: last.v.y, q: last.v.q, c: last.v.c, e: last.v.e,
-    econ: last.axes.econ, qual: last.axes.qual, env: last.axes.env,
-    picks: last.picks.join(','), pickLabels: last.picks.map((k, i) => (i + 1) + SCENES[i].title + ':' + WHO[k].name).join(' / '),
-    history: G.hist.map((h) => h.grade + '(' + h.total + ')').join(' → '),
+    /* 今の提出先（生物育成シミュレーターと同じApps Script）の「記録」シートにそのまま入る項目 */
+    kind: '名物づくり', sim: 'ミニトマト（道の駅の名物づくり）', kumi: G.cls, ban: G.num, name: G.name,
+    play: G.hist.length, overCount: '', setting: pickLabels, goal: '評価' + last.grade + '「' + title + '」', why: '評価の履歴：' + history,
+    turn: '10場面', summary: meters + '／合計' + last.total + '／かたより' + last.bias,
+    axes: ['もうけ・量 ' + last.axes.econ, '品質 ' + last.axes.qual, '環境 ' + last.axes.env, 'かたより ' + last.bias], total: '',
+    overCause: '', overReflect: '',
+    q1: '【迷った場面】' + G.hard + '【理由】' + G.reason, q2: '【トレードオフとは】' + G.trade, q3: '【3人の考えをくらべられたか】' + G.self, q4: '',
+    /* 専用シート「名物づくり」用（コード.gs を更新すると、こちらが使われる） */
+    ver: CONFIG.VERSION, attempts: G.hist.length, grade: last.grade, ending: title, totalScore: last.total, bias: last.bias,
+    y: last.v.y, q: last.v.q, c: last.v.c, e: last.v.e, econ: last.axes.econ, qual: last.axes.qual, env: last.axes.env,
+    picks: last.picks.join(','), pickLabels: pickLabels, history: history,
     hard: G.hard, reason: G.reason, trade: G.trade, self: G.self, seconds: last.sec
   };
 }
 function payloadText(p) {
-  return ['【道の駅の名物づくり　記録】', p.cls + '組' + p.num + '番　' + p.name, '評価：' + p.grade + '（合計' + p.total + '／かたより' + p.bias + '）　挑戦' + p.attempts + '回', '履歴：' + p.history,
+  return ['【道の駅の名物づくり　記録】', p.kumi + '組' + p.ban + '番　' + p.name, '評価：' + p.grade + '「' + p.ending + '」（合計' + p.totalScore + '／かたより' + p.bias + '）　挑戦' + p.attempts + '回', '履歴：' + p.history,
     'メーター：収量' + p.y + ' 品質' + p.q + ' コスト' + p.c + ' 環境' + p.e, '選択：' + p.pickLabels,
     '①いちばん迷った場面：' + p.hard, '②理由：' + p.reason, '③トレードオフとは：' + p.trade, '④3人の考えをくらべられたか：' + p.self].join('\n');
+}
+function postForm(url, data) {
+  const f = document.createElement('form'); f.method = 'POST'; f.action = url; f.target = '_blank'; f.acceptCharset = 'UTF-8'; f.style.display = 'none';
+  const i = document.createElement('input'); i.type = 'hidden'; i.name = 'payload'; i.value = JSON.stringify(data); f.appendChild(i);
+  document.body.appendChild(f); f.submit(); setTimeout(() => f.remove(), 1500);
 }
 function submit() {
   const p = buildPayload();
   let msg;
   if (CONFIG.SUBMIT_URL) {
-    const f = document.createElement('form'); f.method = 'POST'; f.action = CONFIG.SUBMIT_URL; f.target = '_blank'; f.style.display = 'none';
-    Object.keys(p).forEach((k) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = p[k]; f.appendChild(i); });
-    document.body.appendChild(f); f.submit(); setTimeout(() => f.remove(), 1000);
-    msg = '記録を送りました。新しいタブに「受け付けました」と出ていたら完了です。<br>（出ていないときは、もう一度「記録を送る」を押してください）';
+    postForm(CONFIG.SUBMIT_URL, p);
+    msg = '新しいタブで提出画面が開きました。「✅ 提出できました」と表示されたら完了です（そのタブは閉じてかまいません）。<br>ログイン画面が出たときは、学校のアカウントでログインしてから「もう一度送る」を押してください。<br><button class="btn sub" id="resend" style="margin-top:10px">もう一度送る</button>';
   } else {
     msg = '<b style="color:#b91c1c">送信先が未設定です（先生用）。</b>下の文章をコピーして提出してください。<textarea class="copybox" id="cp" readonly>' + esc(payloadText(p)) + '</textarea><button class="btn sub" id="cpb" style="margin-top:6px">コピーする</button>';
   }
   clearUI();
   ui('<div class="screen"><div class="panel form" style="width:880px"><h2>おつかれさま！</h2><div style="font-size:20px;line-height:1.7">' + msg + '</div>' +
      '<div style="display:flex;gap:14px;justify-content:flex-end;margin-top:16px"><button class="btn sub" id="again">ステージ2からもう一度</button><button class="btn" id="home">タイトルへ</button></div></div></div>');
+  const rs = $('#resend'); if (rs) rs.onclick = () => postForm(CONFIG.SUBMIT_URL, p);
   const cpb = $('#cpb'); if (cpb) cpb.onclick = () => { const t = $('#cp'); t.select(); try { document.execCommand('copy'); cpb.textContent = 'コピーしました'; } catch (e) { /* 手動でコピー */ } };
   $('#again').onclick = stage2Retry; $('#home').onclick = () => { G = null; screenTitle(); };
 }
