@@ -75,6 +75,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .decide:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 .memo{position:absolute;left:28px;right:210px;bottom:14px;background:#fef9c3;color:#422006;border-radius:12px;padding:8px 14px;font-size:16px;line-height:1.5}
 .memo b{color:#b45309}
+.memo .tb{display:inline-block;margin-left:8px;background:#0f766e;color:#fff;border-radius:999px;padding:0 10px;font-size:13px;font-weight:700;white-space:nowrap}
 .note{color:#fca5a5;font-size:18px;margin-top:2px}
 .note:before{content:"⚠ "}
 
@@ -1695,7 +1696,7 @@ function resultPhase(i, key) {
   const last = i === SCENES.length - 1;
   showDlg(spkTag('narr') + '<div class="txt" style="min-height:50px;font-size:22px"></div>' +
     (r.note ? '<div class="note">' + r.note + '</div>' : '') +
-    '<div class="memo"><b>学習メモ</b>　' + sc.memo + '</div><button class="go" hidden>' + (last ? '結果を見る ▶' : 'つぎの場面へ ▶') + '</button>');
+    '<div class="memo"><b>学習メモ</b>　' + sc.memo + (sc.tb ? '<span class="tb">教科書：' + sc.tb + '</span>' : '') + '</div><button class="go" hidden>' + (last ? '結果を見る ▶' : 'つぎの場面へ ▶') + '</button>');
   const go = $('.go', dlgEl);
   go.onclick = () => { go.disabled = true; last ? showEnding() : runScene(i + 1); };
   typeInto($('.txt', dlgEl), sc.ch[key].result, () => { go.hidden = false; go.focus(); });
